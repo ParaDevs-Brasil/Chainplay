@@ -1,22 +1,53 @@
+/* Design system inspirado em welikesports.com:
+   zinc escuro + brand laranja #d64c00, Inter para UI e JetBrains Mono
+   para números, cantos .5rem, pills e grade sutil de fundo */
+
+:root {
+  --bg: #09090b;
+  --surface: #18181b;
+  --surface-2: #0a0a0a;
+  --border: #27272a;
+  --text: #fafafa;
+  --text-2: #e4e4e7;
+  --muted: #71717a;
+  --brand: #d64c00;
+  --brand-hover: #f05a00;
+  --mint: #3ee8b5;
+  --amber: #fbbf24;
+  --red: #db2424;
+  --radius: 0.5rem;
+}
+
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-  background: radial-gradient(circle at 20% 0%, #14532d 0%, #052e16 55%, #020617 100%);
-  color: #f0fdf4;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(90deg, rgba(228, 228, 231, 0.045) 1px, transparent 0),
+    linear-gradient(180deg, rgba(228, 228, 231, 0.045) 1px, transparent 0);
+  background-size: 44px 44px;
+  color: var(--text);
   min-height: 100vh;
 }
 
+.mono,
+.value,
+.scoreline,
+.scoreboard strong {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
 .shell {
-  max-width: 880px;
+  max-width: 920px;
   margin: 0 auto;
-  padding: 24px 16px 48px;
+  padding: 32px 16px 56px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 22px;
   align-items: center;
 }
 
@@ -32,67 +63,87 @@ header {
 
 h1 {
   margin: 0;
-  font-size: 2.4rem;
-  letter-spacing: 1px;
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+h1 .accent {
+  color: var(--brand);
 }
 
 .tagline {
-  margin: 4px 0 8px;
-  color: #bbf7d0;
+  margin: 6px 0 10px;
+  color: var(--muted);
+  font-size: 0.95rem;
 }
 
 .badge {
-  font-size: 0.72rem;
-  padding: 3px 10px;
-  border-radius: 999px;
-  border: 1px solid #4ade80;
-  color: #4ade80;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  border: 1px solid var(--mint);
+  color: var(--mint);
+  background: rgba(62, 232, 181, 0.08);
 }
 
 .badge.mock {
-  border-color: #facc15;
-  color: #facc15;
+  border-color: var(--amber);
+  color: var(--amber);
+  background: rgba(251, 191, 36, 0.08);
 }
 
 .dim {
-  color: #94a3b8;
+  color: var(--muted);
   font-size: 0.85rem;
 }
 
 .scoreboard {
   display: flex;
-  gap: 28px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 12px 28px;
-  border-radius: 14px;
+  gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
 }
 
 .scoreboard > div {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
+  padding: 12px 28px;
+}
+
+.scoreboard > div + div {
+  border-left: 1px solid var(--border);
 }
 
 .scoreboard .label {
-  font-size: 0.7rem;
+  font-size: 0.66rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #86efac;
+  letter-spacing: 0.1em;
+  color: var(--muted);
 }
 
 .scoreboard strong {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
+  font-weight: 700;
 }
 
 .category {
-  font-size: 1.15rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  background: rgba(74, 222, 128, 0.12);
-  border: 1px solid rgba(74, 222, 128, 0.4);
-  padding: 8px 20px;
-  border-radius: 10px;
+  color: var(--text-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--brand);
+  padding: 10px 20px;
+  border-radius: var(--radius);
 }
 
 .category .icon {
@@ -103,71 +154,82 @@ h1 {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   gap: 16px;
-  align-items: center;
+  align-items: stretch;
   width: 100%;
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 16px;
-  padding: 18px;
-  min-height: 210px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 18px;
+  min-height: 230px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
   text-align: center;
+  transition: border-color 0.15s ease;
+}
+
+.card.hidden-value {
+  border-style: dashed;
 }
 
 .card-label {
-  font-size: 0.7rem;
+  font-size: 0.66rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #86efac;
+  letter-spacing: 0.1em;
+  color: var(--muted);
 }
 
 .stage {
   font-size: 0.72rem;
-  color: #a7f3d0;
+  color: var(--brand);
+  font-weight: 600;
 }
 
 .teams {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   font-weight: 600;
-  font-size: 1.02rem;
+  font-size: 1.05rem;
+  color: var(--text-2);
 }
 
 .teams em {
-  color: #86efac;
-  font-size: 0.75rem;
+  color: var(--muted);
+  font-size: 0.7rem;
   font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .value {
-  font-size: 3rem;
+  font-size: 3.2rem;
   font-weight: 800;
   line-height: 1;
   margin-top: auto;
 }
 
 .hidden-value .value {
-  color: #facc15;
+  color: var(--brand);
 }
 
 .scoreline {
   font-size: 0.85rem;
-  color: #bbf7d0;
+  color: var(--muted);
 }
 
 .vs {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-  min-width: 150px;
+  min-width: 160px;
 }
 
 .guess-buttons {
@@ -178,84 +240,126 @@ h1 {
 
 button {
   cursor: pointer;
-  border: none;
-  border-radius: 12px;
-  padding: 12px 22px;
-  font-size: 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: 12px 24px;
+  font-family: inherit;
+  font-size: 0.95rem;
   font-weight: 700;
-  color: #052e16;
-  background: #e2e8f0;
-  transition: transform 0.1s ease;
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--border);
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
 }
 
 button:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
+  border-color: var(--muted);
 }
 
 button.hi {
-  background: #4ade80;
+  background: var(--mint);
+  border-color: var(--mint);
+  color: #052e22;
+}
+
+button.hi:hover {
+  background: #5cf0c4;
 }
 
 button.lo {
-  background: #f87171;
+  background: var(--red);
+  border-color: var(--red);
+}
+
+button.lo:hover {
+  background: #ef3535;
 }
 
 button.primary {
-  background: #facc15;
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+button.primary:hover {
+  background: var(--brand-hover);
 }
 
 .result {
   font-weight: 700;
+  font-size: 0.9rem;
   padding: 10px 14px;
-  border-radius: 10px;
+  border-radius: var(--radius);
   text-align: center;
 }
 
 .result.ok {
-  background: rgba(74, 222, 128, 0.2);
-  border: 1px solid #4ade80;
+  background: rgba(62, 232, 181, 0.1);
+  border: 1px solid var(--mint);
+  color: var(--mint);
 }
 
 .result.bad {
-  background: rgba(248, 113, 113, 0.2);
-  border: 1px solid #f87171;
+  background: rgba(219, 36, 36, 0.12);
+  border: 1px solid var(--red);
+  color: #fca5a5;
 }
 
 .result.push {
-  background: rgba(250, 204, 21, 0.2);
-  border: 1px solid #facc15;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid var(--amber);
+  color: var(--amber);
 }
 
 .endgame {
   text-align: center;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 16px;
-  padding: 20px 32px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--brand);
+  border-radius: var(--radius);
+  padding: 24px 36px;
+}
+
+.endgame h2 {
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
 }
 
 .endgame-actions {
   display: flex;
   gap: 12px;
   justify-content: center;
-  margin-top: 12px;
+  margin-top: 16px;
 }
 
 footer {
   font-size: 0.78rem;
-  color: #86efac;
+  color: var(--muted);
 }
 
 footer a {
-  color: #4ade80;
+  color: var(--brand);
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
 }
 
 @media (max-width: 640px) {
+  h1 {
+    font-size: 2rem;
+  }
+
   .cards {
     grid-template-columns: 1fr;
   }
 
   .vs {
     order: 3;
+  }
+
+  .scoreboard > div {
+    padding: 10px 18px;
   }
 }

@@ -164,7 +164,7 @@ export default function App() {
   return (
     <div className="shell">
       <header>
-        <h1>⚽ Hi-Lo Stats</h1>
+        <h1>⚽ Hi-Lo <span className="accent">Stats</span></h1>
         <p className="tagline">Copa 2026 · a próxima partida vem MAIOR ou menor?</p>
         <span className={`badge ${data?.source}`}>{sourceBadge}</span>
       </header>
