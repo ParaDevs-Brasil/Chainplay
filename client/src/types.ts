@@ -34,6 +34,14 @@ export const CATEGORY_LABELS: Record<StatCategory, string> = {
   possession: "Posse de bola do mandante (%)",
 };
 
+// unidade curta para montar frases ("11 escanteios", "54% de posse")
+export const CATEGORY_UNITS: Record<StatCategory, string> = {
+  goals: "gols",
+  corners: "escanteios",
+  yellowCards: "cartões amarelos",
+  possession: "% de posse",
+};
+
 export const CATEGORY_ICONS: Record<StatCategory, string> = {
   goals: "⚽",
   corners: "🚩",

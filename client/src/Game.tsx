@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   CATEGORY_ICONS,
   CATEGORY_LABELS,
+  CATEGORY_UNITS,
   statValue,
   type GameData,
   type GameMatch,
@@ -42,6 +43,14 @@ export default function Game() {
     Number(localStorage.getItem("hilo-best") ?? 0)
   );
   const [copied, setCopied] = useState(false);
+  const [showHelp, setShowHelp] = useState(
+    () => localStorage.getItem("hilo-help") !== "off"
+  );
+
+  function dismissHelp() {
+    setShowHelp(false);
+    localStorage.setItem("hilo-help", "off");
+  }
 
   useEffect(() => {
     fetch("/api/game/matches")
@@ -185,25 +194,74 @@ export default function Game() {
         </div>
       </div>
 
+      {showHelp && (
+        <aside className="help-box">
+          <div className="help-head">
+            <strong>💡 Como jogar</strong>
+            <button
+              className="help-close"
+              onClick={dismissHelp}
+              aria-label="Fechar ajuda"
+            >
+              ✕ fechar
+            </button>
+          </div>
+          <ol>
+            <li>
+              Veja a estatística da <strong>partida anterior</strong> (cartão da
+              esquerda).
+            </li>
+            <li>
+              Palpite: a <strong>próxima partida</strong> terá um número{" "}
+              <strong>maior ⬆</strong> ou <strong>menor ⬇</strong>?
+            </li>
+            <li>
+              Acertou, a sequência 🔥 cresce. Errou, fim de jogo. Empate mantém
+              a sequência.
+            </li>
+          </ol>
+        </aside>
+      )}
+
       <div className="category">
         <span className="icon">{CATEGORY_ICONS[category]}</span>
-        {CATEGORY_LABELS[category]}
+        <div className="category-text">
+          <strong>{CATEGORY_LABELS[category]}</strong>
+          <span className="category-question">
+            A próxima partida terá mais ou menos que{" "}
+            <b className="mono">{currentValue}</b> {CATEGORY_UNITS[category]}?
+          </span>
+        </div>
       </div>
 
       <div className="cards">
-        <MatchCard match={current} value={currentValue} revealed label="Última partida" />
+        <MatchCard
+          match={current}
+          value={currentValue}
+          revealed
+          label="Última partida"
+          unit={CATEGORY_UNITS[category]}
+        />
         <div className="vs">
           {phase === "playing" ? (
             <div className="guess-buttons">
               <button className="hi" onClick={() => guess("higher")}>
                 ⬆ MAIOR
+                <small>mais que {currentValue}</small>
               </button>
               <button className="lo" onClick={() => guess("lower")}>
                 ⬇ MENOR
+                <small>menos que {currentValue}</small>
               </button>
             </div>
           ) : (
-            <ResultBanner result={lastResult} guess={lastGuess} />
+            <ResultBanner
+              result={lastResult}
+              guess={lastGuess}
+              current={currentValue}
+              next={nextValue}
+              unit={CATEGORY_UNITS[category]}
+            />
           )}
         </div>
         <MatchCard
@@ -211,6 +269,7 @@ export default function Game() {
           value={nextValue}
           revealed={phase !== "playing"}
           label="Próxima partida"
+          unit={CATEGORY_UNITS[category]}
         />
       </div>
 
@@ -252,11 +311,13 @@ function MatchCard({
   value,
   revealed,
   label,
+  unit,
 }: {
   match?: GameMatch;
   value: number;
   revealed: boolean;
   label: string;
+  unit: string;
 }) {
   if (!match) return <div className="card" />;
   return (
@@ -269,10 +330,11 @@ function MatchCard({
         <span>{match.away}</span>
       </div>
       <div className="value">{revealed ? value : "?"}</div>
-      {revealed && (
-        <div className="scoreline">
-          {match.stats.goals[0]} × {match.stats.goals[1]}
-        </div>
+      <div className="value-unit">{unit}</div>
+      {revealed ? (
+        <div className="scoreline">placar: {match.stats.goals[0]} × {match.stats.goals[1]}</div>
+      ) : (
+        <div className="scoreline dim-hint">qual será o número?</div>
       )}
     </div>
   );
@@ -281,15 +343,45 @@ function MatchCard({
 function ResultBanner({
   result,
   guess,
+  current,
+  next,
+  unit,
 }: {
   result: RoundResult | null;
   guess: Guess | null;
+  current: number;
+  next: number;
+  unit: string;
 }) {
   if (!result) return null;
-  if (result.push) return <div className="result push">🤝 Empatou — mantém a sequência!</div>;
+  const cmp = next > current ? ">" : next < current ? "<" : "=";
+  const detail = (
+    <span className="result-detail mono">
+      {next} {cmp} {current}
+    </span>
+  );
+  if (result.push) {
+    return (
+      <div className="result push">
+        🤝 Deu igual! {detail}
+        <small>Empate não conta ponto, mas a sequência continua.</small>
+      </div>
+    );
+  }
   return result.correct ? (
-    <div className="result ok">✅ Acertou{guess === "higher" ? " (maior)" : " (menor)"}!</div>
+    <div className="result ok">
+      ✅ Acertou! {detail}
+      <small>
+        Veio {cmp === ">" ? "maior" : "menor"}, como você palpitou.
+      </small>
+    </div>
   ) : (
-    <div className="result bad">❌ Errou!</div>
+    <div className="result bad">
+      ❌ Errou! {detail}
+      <small>
+        Você palpitou {guess === "higher" ? "maior" : "menor"}, mas foram{" "}
+        {next} {unit}.
+      </small>
+    </div>
   );
 }
