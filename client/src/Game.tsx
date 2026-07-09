@@ -175,7 +175,7 @@ export default function Game() {
           <a className="back-link" href="#/">{t.game.back}</a>
           <LangToggle />
         </div>
-        <h1>⚽ Hi-Lo <span className="accent">Stats</span></h1>
+        <h1 className="logo-heading">Hi-<span className="accent">Lo</span></h1>
         <p className="tagline">{t.game.tagline}</p>
         <span className={`badge ${data?.source}`}>{sourceBadge}</span>
       </header>

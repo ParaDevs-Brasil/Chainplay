@@ -170,7 +170,7 @@ const pt = {
   why: {
     kicker: "// por quê",
     h2pre: "Por que o",
-    h2accent: "Hi-Lo Stats",
+    h2accent: "Hi-Lo",
     h2post: "?",
     lead:
       "Dados que antes só os grandes operadores tinham, transformados num jogo que qualquer torcedor abre no intervalo.",
@@ -247,7 +247,7 @@ const pt = {
     h2pre: "Começa na Copa.",
     h2accent: "Não termina nela.",
     lead:
-      "O Hi-Lo Stats é a porta de entrada de um modelo de jogos casuais sobre dados esportivos verificáveis.",
+      "O Hi-Lo é a porta de entrada de um modelo de jogos casuais sobre dados esportivos verificáveis.",
     items: [
       {
         tag: "Agora",
@@ -278,7 +278,7 @@ const pt = {
 
   nots: {
     kicker: "// sem pegadinha",
-    h2pre: "O que o Hi-Lo Stats",
+    h2pre: "O que o Hi-Lo",
     h2accent: "não",
     h2post: "é",
     lead: "Jogo gratuito de entretenimento sobre dados reais. Nada além disso.",
@@ -365,7 +365,7 @@ const pt = {
     copied: "✓ Copiado!",
     playAgain: "↻ Jogar de novo",
     shareText: (streak: number, best: number, played: number, total: number) =>
-      `⚽ Hi-Lo Stats · Copa 2026\n` +
+      `⚽ Hi-Lo · Copa 2026\n` +
       `🔥 Sequência: ${streak} | 🏆 Recorde: ${best}\n` +
       `Sobrevivi a ${played} de ${total} rodadas. Consegue mais?`,
     scoreline: (h: number, a: number) => `placar: ${h} × ${a}`,
@@ -567,7 +567,7 @@ const en: Dict = {
   why: {
     kicker: "// why",
     h2pre: "Why",
-    h2accent: "Hi-Lo Stats",
+    h2accent: "Hi-Lo",
     h2post: "?",
     lead:
       "Data that only big operators used to have, turned into a game any fan can open at half-time.",
@@ -644,7 +644,7 @@ const en: Dict = {
     h2pre: "It starts at the World Cup.",
     h2accent: "It doesn't end there.",
     lead:
-      "Hi-Lo Stats is the entry point of a casual-games model built on verifiable sports data.",
+      "Hi-Lo is the entry point of a casual-games model built on verifiable sports data.",
     items: [
       {
         tag: "Now",
@@ -675,7 +675,7 @@ const en: Dict = {
 
   nots: {
     kicker: "// no tricks",
-    h2pre: "What Hi-Lo Stats is",
+    h2pre: "What Hi-Lo is",
     h2accent: "not",
     h2post: "",
     lead: "A free entertainment game built on real data. Nothing more than that.",
@@ -761,7 +761,7 @@ const en: Dict = {
     copied: "✓ Copied!",
     playAgain: "↻ Play again",
     shareText: (streak, best, played, total) =>
-      `⚽ Hi-Lo Stats · World Cup 2026\n` +
+      `⚽ Hi-Lo · World Cup 2026\n` +
       `🔥 Streak: ${streak} | 🏆 Record: ${best}\n` +
       `I survived ${played} of ${total} rounds. Can you do better?`,
     scoreline: (h, a) => `score: ${h} × ${a}`,

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import markIcon from "./assets/mark.png";
 import { LangToggle, useLang } from "./i18n";
 
 /* ---------- teaser jogável do hero ---------- */
@@ -307,10 +306,9 @@ export default function Landing() {
   return (
     <div className="landing">
       <nav className="topbar">
-        <span className="logo">
-          <img className="logo-mark" src={markIcon} alt="Hi-Lo Stats" />
-          Hi-Lo <span className="accent">Stats</span>
-        </span>
+        <a className="logo" href="#/" aria-label="Hi-Lo">
+          Hi-<span className="accent">Lo</span>
+        </a>
         <div className="topbar-links">
           <a href="#como-funciona">{t.nav.how}</a>
           <a href="#tecnologia">{t.nav.tech}</a>
@@ -502,9 +500,9 @@ export default function Landing() {
       <footer className="landing-footer">
         <div className="footer-grid">
           <div className="footer-col">
-            <span className="logo">
-              ⚽ Hi-Lo <span className="accent">Stats</span>
-            </span>
+            <a className="logo" href="#/" aria-label="Hi-Lo">
+              Hi-<span className="accent">Lo</span>
+            </a>
             <p>{t.footer.blurb}</p>
           </div>
           <div className="footer-col">

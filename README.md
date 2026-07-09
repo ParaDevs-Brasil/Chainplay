@@ -1,4 +1,4 @@
-# ⚽ Hi-Lo Stats · Copa 2026
+# Hi-Lo · Copa 2026
 
 Jogo de palpites com dados reais da Copa do Mundo 2026 via **TxLINE** (TxODDS),
 a API de dados esportivos com verificação on-chain na **Solana**.

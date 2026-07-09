@@ -27,5 +27,5 @@ app.get("/api/game/matches", async (_req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Hi-Lo Stats server em http://localhost:${PORT} (rede: ${NETWORK})`);
+  console.log(`Hi-Lo server em http://localhost:${PORT} (rede: ${NETWORK})`);
 });

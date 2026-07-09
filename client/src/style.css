@@ -513,21 +513,20 @@ footer a:hover {
   color: var(--text);
 }
 
+/* wordmark textual da marca: "Hi-" neutro + "Lo" na cor da marca */
 .logo {
   display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 1.15rem;
+  align-items: baseline;
+  font-size: 1.3rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.04em;
+  color: var(--text);
+  text-decoration: none;
+  transition: opacity 0.15s ease;
 }
 
-.logo-mark {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  object-fit: cover;
-  display: block;
+a.logo:hover {
+  opacity: 0.8;
 }
 
 .accent {
@@ -1650,4 +1649,9 @@ footer a:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+/* wordmark como título da tela do jogo */
+.logo-heading {
+  letter-spacing: -0.05em;
 }
