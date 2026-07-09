@@ -313,6 +313,7 @@ export default function Landing() {
           <a href="#como-funciona">{t.nav.how}</a>
           <a href="#tecnologia">{t.nav.tech}</a>
           <a href="#roadmap">{t.nav.vision}</a>
+          <a href="#faq">{t.nav.faq}</a>
         </div>
         <div className="topbar-actions">
           <LangToggle />
@@ -321,6 +322,9 @@ export default function Landing() {
           </a>
         </div>
       </nav>
+
+      {/* display: contents preserva o layout flex de .landing */}
+      <main className="landing-main">
 
       <section className="hero">
         <div className="hero-glow" aria-hidden="true" />
@@ -486,6 +490,27 @@ export default function Landing() {
         </div>
       </section>
 
+      <section className="section reveal" id="faq">
+        <span className="section-kicker mono">{t.faq.kicker}</span>
+        <h2>
+          {t.faq.h2pre} <span className="accent">{t.faq.h2accent}</span>
+        </h2>
+        <p className="section-lead">{t.faq.lead}</p>
+        <div className="faq-list">
+          {t.faq.items.map((f) => (
+            <details className="faq-item" key={f.q}>
+              <summary>
+                {f.q}
+                <span className="faq-chevron" aria-hidden="true">
+                  +
+                </span>
+              </summary>
+              <p>{f.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
       <section className="cta-final reveal">
         <span className="badge">
           <span className="live-dot" /> {t.cta.badge}
@@ -496,6 +521,8 @@ export default function Landing() {
           {t.cta.btn}
         </a>
       </section>
+
+      </main>
 
       <footer className="landing-footer">
         <div className="footer-grid">
@@ -510,6 +537,7 @@ export default function Landing() {
             <a href="#/jogar">{t.footer.play}</a>
             <a href="#como-funciona">{t.footer.how}</a>
             <a href="#roadmap">{t.footer.vision}</a>
+            <a href="#faq">{t.footer.faq}</a>
           </div>
           <div className="footer-col">
             <strong>{t.footer.techCol}</strong>
@@ -518,6 +546,13 @@ export default function Landing() {
             </a>
             <a href="https://solana.com" target="_blank" rel="noreferrer">
               Solana
+            </a>
+            <a
+              href="https://github.com/ParaDevs-Brasil/sol-hackton"
+              target="_blank"
+              rel="noreferrer"
+            >
+              {t.footer.github}
             </a>
             <a href="#tecnologia">{t.footer.architecture}</a>
           </div>

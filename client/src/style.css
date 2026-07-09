@@ -1443,7 +1443,8 @@ a.logo:hover {
 .reveal :is(.grid-3, .pipeline, .roadmap, .not-grid) > * {
   opacity: 0;
   transform: translateY(16px);
-  transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.15s ease;
+  transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.15s ease,
+    box-shadow 0.2s ease;
 }
 
 .reveal.in :is(.grid-3, .pipeline, .roadmap, .not-grid) > * {
@@ -1654,4 +1655,123 @@ a.logo:hover {
 /* wordmark como título da tela do jogo */
 .logo-heading {
   letter-spacing: -0.05em;
+}
+
+/* ---------- polish: acessibilidade, estados e elevação ---------- */
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* landmark <main> sem quebrar o flex de .landing */
+.landing-main {
+  display: contents;
+}
+
+/* foco visível consistente para navegação por teclado (WCAG 2.4.7) */
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+.pill-btn:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 3px;
+}
+
+/* estado ativo: botão "assenta" ao ser pressionado */
+button:active:not(:disabled),
+.btn:active,
+.pill-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
+/* CTA primário com presença: sombra colorida sutil */
+.btn.primary {
+  box-shadow: 0 6px 20px rgba(0, 162, 74, 0.28);
+}
+
+.btn.primary:hover {
+  box-shadow: 0 8px 26px rgba(0, 162, 74, 0.4);
+}
+
+/* elevação no hover dos cards, mantendo o movimento discreto */
+.feature-card:hover,
+.pipe-card:hover,
+.road-card:hover,
+.not-card:hover,
+.faq-item:hover {
+  border-color: var(--brand);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+/* ---------- FAQ ---------- */
+
+.faq-list {
+  width: 100%;
+  max-width: 680px;
+  margin: 24px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.faq-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0 20px;
+  transition: border-color 0.15s ease, box-shadow 0.2s ease;
+}
+
+.faq-item[open] {
+  border-color: var(--brand);
+}
+
+.faq-item summary {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-align: left;
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-chevron {
+  flex-shrink: 0;
+  color: var(--brand);
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.faq-item[open] .faq-chevron {
+  transform: rotate(45deg);
+}
+
+.faq-item > p {
+  margin: 0;
+  padding: 0 0 16px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  text-align: left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .faq-chevron {
+    transition: none;
+  }
 }

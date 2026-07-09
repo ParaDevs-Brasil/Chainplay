@@ -1,6 +1,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useState,
   type ReactNode,
 } from "react";
@@ -11,10 +12,12 @@ export type Lang = "pt" | "en";
 /* ---------- dicionário PT (referência de tipo) ---------- */
 
 const pt = {
+  docTitle: "Hi-Lo · Copa 2026",
   nav: {
     how: "Como funciona",
     tech: "Tecnologia",
     vision: "Visão",
+    faq: "FAQ",
     play: "Jogar agora",
   },
 
@@ -292,6 +295,31 @@ const pt = {
     ],
   },
 
+  faq: {
+    kicker: "// dúvidas rápidas",
+    h2pre: "Perguntas",
+    h2accent: "frequentes",
+    lead: "O essencial antes de dar o primeiro palpite.",
+    items: [
+      {
+        q: "Precisa pagar ou cadastrar alguma coisa?",
+        a: "Não. O jogo é 100% gratuito, roda direto no navegador e não pede e-mail, carteira cripto nem instalação de app.",
+      },
+      {
+        q: "De onde vêm as estatísticas?",
+        a: "Do feed TxLINE (TxODDS), com acesso provado por transação on-chain na Solana. Qualquer pessoa pode auditar os dados — nada é inventado.",
+      },
+      {
+        q: "O que acontece quando eu erro?",
+        a: "A run acaba na hora. Você pode compartilhar o placar em um toque e recomeçar — as categorias são sorteadas de novo a cada partida, então nenhuma run é igual à outra.",
+      },
+      {
+        q: "Isso é aposta?",
+        a: "Não. É um jogo de entretenimento sem dinheiro real, sem odds e sem prêmios em dinheiro. Só você, os dados e a sua sequência.",
+      },
+    ],
+  },
+
   cta: {
     badge: "A Copa está rolando",
     h2: "Pronto para testar seu faro de futebol?",
@@ -306,8 +334,10 @@ const pt = {
     play: "Jogar",
     how: "Como funciona",
     vision: "Visão",
+    faq: "FAQ",
     techCol: "Tecnologia",
     architecture: "Arquitetura",
+    github: "Código no GitHub",
     note: "Hackathon TxODDS × Solana · Copa 2026 — jogo gratuito de entretenimento; não envolve apostas com dinheiro real.",
   },
 
@@ -407,10 +437,12 @@ export type Dict = typeof pt;
 /* ---------- dicionário EN ---------- */
 
 const en: Dict = {
+  docTitle: "Hi-Lo · World Cup 2026",
   nav: {
     how: "How it works",
     tech: "Technology",
     vision: "Vision",
+    faq: "FAQ",
     play: "Play now",
   },
 
@@ -689,6 +721,31 @@ const en: Dict = {
     ],
   },
 
+  faq: {
+    kicker: "// quick answers",
+    h2pre: "Frequently asked",
+    h2accent: "questions",
+    lead: "The essentials before your first guess.",
+    items: [
+      {
+        q: "Do I have to pay or sign up for anything?",
+        a: "No. The game is 100% free, runs right in the browser and asks for no e-mail, crypto wallet or app install.",
+      },
+      {
+        q: "Where do the stats come from?",
+        a: "From the TxLINE feed (TxODDS), with access proven by an on-chain transaction on Solana. Anyone can audit the data — nothing is made up.",
+      },
+      {
+        q: "What happens when I miss?",
+        a: "The run ends right there. You can share your score in one tap and start over — categories are drawn again every run, so no two runs are the same.",
+      },
+      {
+        q: "Is this betting?",
+        a: "No. It's an entertainment game with no real money, no odds and no cash prizes. Just you, the data and your streak.",
+      },
+    ],
+  },
+
   cta: {
     badge: "The World Cup is on",
     h2: "Ready to test your football instincts?",
@@ -703,8 +760,10 @@ const en: Dict = {
     play: "Play",
     how: "How it works",
     vision: "Vision",
+    faq: "FAQ",
     techCol: "Technology",
     architecture: "Architecture",
+    github: "Code on GitHub",
     note: "TxODDS × Solana Hackathon · World Cup 2026 — free entertainment game; no real-money betting involved.",
   },
 
@@ -822,6 +881,13 @@ function initialLang(): Lang {
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(initialLang);
+
+  // mantém o documento coerente com o idioma escolhido (leitores de tela,
+  // tradutores automáticos e título da aba)
+  useEffect(() => {
+    document.documentElement.lang = lang === "pt" ? "pt-BR" : "en";
+    document.title = dictionaries[lang].docTitle;
+  }, [lang]);
 
   function setLang(l: Lang) {
     setLangState(l);
