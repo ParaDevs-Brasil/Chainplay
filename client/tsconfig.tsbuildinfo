@@ -1,1 +1,1 @@
-{"root":["./src/App.tsx","./src/Game.tsx","./src/Landing.tsx","./src/i18n.tsx","./src/main.tsx","./src/types.ts","./src/vite-env.d.ts"],"version":"5.9.3"}
+{"root":["./src/App.tsx","./src/Game.tsx","./src/Landing.tsx","./src/celebration.ts","./src/i18n.tsx","./src/main.tsx","./src/sfx.ts","./src/types.ts","./src/vite-env.d.ts"],"version":"5.9.3"}

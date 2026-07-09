@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CATEGORY_ICONS,
   statValue,
@@ -7,14 +7,37 @@ import {
   type StatCategory,
 } from "./types";
 import { LangToggle, useLang, type Dict } from "./i18n";
+import {
+  celebrateCorrect,
+  celebrateWin,
+  prefersReducedMotion,
+} from "./celebration";
+import { playSfx } from "./sfx";
 
 type Guess = "higher" | "lower";
-type Phase = "loading" | "error" | "playing" | "reveal" | "gameover" | "won";
+// "rolling" é a janela de suspense entre o palpite e a revelação do número
+type Phase =
+  | "loading"
+  | "error"
+  | "playing"
+  | "rolling"
+  | "reveal"
+  | "gameover"
+  | "won";
 
 interface RoundResult {
   correct: boolean;
   push: boolean;
 }
+
+interface PendingOutcome {
+  correct: boolean;
+  push: boolean;
+  newStreak: number;
+  record: boolean;
+}
+
+const ROLL_DURATION = 1000;
 
 // gerador determinístico por seed para a sequência de categorias ser
 // reproduzível dentro de uma mesma run
@@ -43,9 +66,15 @@ export default function Game() {
     Number(localStorage.getItem("hilo-best") ?? 0)
   );
   const [copied, setCopied] = useState(false);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [isRecord, setIsRecord] = useState(false);
   const [showHelp, setShowHelp] = useState(
     () => localStorage.getItem("hilo-help") !== "off"
   );
+  const pending = useRef<PendingOutcome | null>(null);
+  const revealTimer = useRef<number | undefined>(undefined);
+
+  useEffect(() => () => window.clearTimeout(revealTimer.current), []);
 
   function dismissHelp() {
     setShowHelp(false);
@@ -103,24 +132,66 @@ export default function Game() {
   const nextValue = next ? statValue(next, category) : 0;
   const totalRounds = matches.length - 1;
   const unit = t.game.categoryUnits[category];
+  const progress = Math.round(((round + 1) / totalRounds) * 100);
+  const revealed = phase !== "playing" && phase !== "rolling";
+
+  function finishReveal() {
+    const p = pending.current;
+    if (!p) return;
+    setLastResult({ correct: p.correct, push: p.push });
+    if (p.correct) {
+      setStreak(p.newStreak);
+      setScore((s) => s + (p.push ? 0 : 1));
+      if (p.record) {
+        setBest(p.newStreak);
+        localStorage.setItem("hilo-best", String(p.newStreak));
+      }
+      if (!p.push) {
+        setIsRecord(p.record);
+        setSuccessMsg(
+          p.record
+            ? t.game.newRecord
+            : p.newStreak >= 10
+            ? t.game.streakMilestone(p.newStreak)
+            : t.game.successWords[
+                Math.floor(Math.random() * t.game.successWords.length)
+              ]
+        );
+        celebrateCorrect(p.newStreak);
+        playSfx(p.record ? "record" : "correct");
+      } else {
+        setSuccessMsg(null);
+        playSfx("push");
+      }
+    } else {
+      setSuccessMsg(null);
+      setIsRecord(false);
+      playSfx("wrong");
+    }
+    setPhase("reveal");
+  }
 
   function guess(g: Guess) {
     if (phase !== "playing" || !next) return;
+    playSfx("click");
     const push = nextValue === currentValue;
     const correct =
       push || (g === "higher" ? nextValue > currentValue : nextValue < currentValue);
+    const newStreak = correct && !push ? streak + 1 : streak;
+    pending.current = {
+      correct,
+      push,
+      newStreak,
+      record: correct && !push && newStreak > best,
+    };
     setLastGuess(g);
-    setLastResult({ correct, push });
-    if (correct) {
-      const newStreak = push ? streak : streak + 1;
-      setStreak(newStreak);
-      setScore((s) => s + (push ? 0 : 1));
-      if (newStreak > best) {
-        setBest(newStreak);
-        localStorage.setItem("hilo-best", String(newStreak));
-      }
+    if (prefersReducedMotion()) {
+      // sem suspense animado: revela direto
+      finishReveal();
+      return;
     }
-    setPhase("reveal");
+    setPhase("rolling");
+    revealTimer.current = window.setTimeout(finishReveal, ROLL_DURATION);
   }
 
   function nextRound() {
@@ -130,11 +201,16 @@ export default function Game() {
     }
     if (round + 2 >= matches.length) {
       setPhase("won");
+      celebrateWin();
+      playSfx("win");
       return;
     }
     setRound((r) => r + 1);
     setLastResult(null);
     setLastGuess(null);
+    setSuccessMsg(null);
+    setIsRecord(false);
+    pending.current = null;
     setPhase("playing");
   }
 
@@ -145,6 +221,9 @@ export default function Game() {
     setScore(0);
     setLastResult(null);
     setLastGuess(null);
+    setSuccessMsg(null);
+    setIsRecord(false);
+    pending.current = null;
     setPhase("playing");
   }
 
@@ -168,6 +247,13 @@ export default function Game() {
       ? t.game.sourceTx(data.network ?? "devnet")
       : t.game.sourceMock;
 
+  const nextCardState =
+    phase === "reveal" && lastResult
+      ? lastResult.correct
+        ? "flash-ok"
+        : "flash-bad"
+      : "";
+
   return (
     <div className="shell">
       <header>
@@ -183,16 +269,37 @@ export default function Game() {
       <div className="scoreboard">
         <div>
           <span className="label">{t.game.round}</span>
-          <strong>{round + 1}/{totalRounds}</strong>
+          <strong className="stat-pop" key={`r${round}`}>
+            {round + 1}/{totalRounds}
+          </strong>
         </div>
         <div>
           <span className="label">{t.game.streak}</span>
-          <strong>🔥 {streak}</strong>
+          <strong className="stat-pop" key={`s${streak}`}>🔥 {streak}</strong>
         </div>
         <div>
           <span className="label">{t.game.best}</span>
-          <strong>🏆 {best}</strong>
+          <strong
+            className={`stat-pop ${isRecord && revealed ? "record-glow" : ""}`}
+            key={`b${best}`}
+          >
+            🏆 {best}
+          </strong>
         </div>
+      </div>
+
+      <div
+        className="progress-wrap"
+        role="progressbar"
+        aria-valuenow={progress}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={t.game.round}
+      >
+        <div className="progress-bar">
+          <div className="progress-fill" style={{ width: `${progress}%` }} />
+        </div>
+        <span className="progress-label mono">{t.game.progressOf(progress)}</span>
       </div>
 
       {showHelp && (
@@ -207,9 +314,12 @@ export default function Game() {
               {t.game.helpClose}
             </button>
           </div>
-          <ol>
-            {t.game.helpItems.map((item, i) => (
-              <li key={i}>{item}</li>
+          <ol className="help-steps">
+            {t.game.helpSteps.map((step, i) => (
+              <li key={step}>
+                <span className="step-dot mono">{i + 1}</span>
+                {step}
+              </li>
             ))}
           </ol>
         </aside>
@@ -235,13 +345,33 @@ export default function Game() {
           t={t}
         />
         <div className="vs">
-          {phase === "playing" ? (
+          {phase === "playing" || phase === "rolling" ? (
             <div className="guess-buttons">
-              <button className="hi" onClick={() => guess("higher")}>
+              <button
+                className={`hi ${
+                  phase === "rolling"
+                    ? lastGuess === "higher"
+                      ? "picked"
+                      : "dim"
+                    : ""
+                }`}
+                disabled={phase === "rolling"}
+                onClick={() => guess("higher")}
+              >
                 {t.game.higher}
                 <small>{t.game.moreThan(currentValue)}</small>
               </button>
-              <button className="lo" onClick={() => guess("lower")}>
+              <button
+                className={`lo ${
+                  phase === "rolling"
+                    ? lastGuess === "lower"
+                      ? "picked"
+                      : "dim"
+                    : ""
+                }`}
+                disabled={phase === "rolling"}
+                onClick={() => guess("lower")}
+              >
                 {t.game.lower}
                 <small>{t.game.lessThan(currentValue)}</small>
               </button>
@@ -260,12 +390,25 @@ export default function Game() {
         <MatchCard
           match={next}
           value={nextValue}
-          revealed={phase !== "playing"}
+          revealed={revealed}
+          rolling={phase === "rolling"}
+          rollMax={currentValue}
           label={t.game.nextMatch}
           unit={unit}
           t={t}
+          stateClass={nextCardState}
         />
       </div>
+
+      {phase === "reveal" && lastResult?.correct && !lastResult.push && successMsg && (
+        <div
+          className={`success-float ${isRecord || streak >= 5 ? "gold" : ""}`}
+          key={round}
+          aria-hidden="true"
+        >
+          {successMsg}
+        </div>
+      )}
 
       {phase === "reveal" && (
         <button className="primary" onClick={nextRound}>
@@ -291,24 +434,47 @@ export default function Game() {
   );
 }
 
+/* número girando durante o suspense do reveal */
+function RollingValue({ max }: { max: number }) {
+  const [n, setN] = useState(() => Math.floor(Math.random() * (max + 6)));
+  useEffect(() => {
+    const id = window.setInterval(
+      () => setN(Math.floor(Math.random() * (max + 6))),
+      70
+    );
+    return () => window.clearInterval(id);
+  }, [max]);
+  return <span className="rolling">{n}</span>;
+}
+
 function MatchCard({
   match,
   value,
   revealed,
+  rolling = false,
+  rollMax = 10,
   label,
   unit,
   t,
+  stateClass = "",
 }: {
   match?: GameMatch;
   value: number;
   revealed: boolean;
+  rolling?: boolean;
+  rollMax?: number;
   label: string;
   unit: string;
   t: Dict;
+  stateClass?: string;
 }) {
   if (!match) return <div className="card" />;
   return (
-    <div className={`card ${revealed ? "revealed" : "hidden-value"}`}>
+    <div
+      className={`card ${revealed ? "revealed" : "hidden-value"} ${
+        stateClass === "flash-bad" ? "wrong-shake" : ""
+      }`}
+    >
       <span className="card-label">{label}</span>
       {match.stage && <span className="stage">{match.stage}</span>}
       <div className="teams">
@@ -316,7 +482,9 @@ function MatchCard({
         <em>vs</em>
         <span>{match.away}</span>
       </div>
-      <div className="value">{revealed ? value : "?"}</div>
+      <div className={`value ${revealed ? stateClass : ""}`}>
+        {revealed ? value : rolling ? <RollingValue max={rollMax} /> : "?"}
+      </div>
       <div className="value-unit">{unit}</div>
       {revealed ? (
         <div className="scoreline">
