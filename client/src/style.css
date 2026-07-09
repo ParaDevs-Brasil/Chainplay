@@ -529,6 +529,14 @@ a.logo:hover {
   opacity: 0.8;
 }
 
+.logo-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  object-fit: cover;
+  display: block;
+}
+
 .accent {
   color: var(--brand);
 }
