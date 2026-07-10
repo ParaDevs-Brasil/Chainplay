@@ -19,6 +19,12 @@ const pt = {
     vision: "Visão",
     faq: "FAQ",
     play: "Jogar agora",
+    home: "Início",
+    howToPlay: "Como jogar",
+    ranking: "Ranking",
+    history: "Histórico",
+    soon: "em breve",
+    menuAria: "Abrir menu de navegação",
   },
 
   ticker: [
@@ -361,6 +367,14 @@ const pt = {
       "Acompanhe a revelação",
       "Aumente sua sequência",
     ],
+    helpCta: "Entendi, bora jogar! ⚽",
+    questionTitle: (label: string): ReactNode => (
+      <>
+        {label}: vem <span className="accent">MAIOR</span> ou{" "}
+        <span className="muted-strike">menor</span>?
+      </>
+    ),
+    pendingPick: "🎯 Palpite pendente",
     progressOf: (pct: number) => `${pct}% da campanha`,
     newRecord: "🏆 Novo recorde!",
     categoryQuestion: (value: number, unit: string): ReactNode => (
@@ -449,6 +463,12 @@ const en: Dict = {
     vision: "Vision",
     faq: "FAQ",
     play: "Play now",
+    home: "Home",
+    howToPlay: "How to play",
+    ranking: "Leaderboard",
+    history: "History",
+    soon: "soon",
+    menuAria: "Open navigation menu",
   },
 
   ticker: [
@@ -792,6 +812,14 @@ const en: Dict = {
       "Watch the reveal",
       "Grow your streak",
     ],
+    helpCta: "Got it, let's play! ⚽",
+    questionTitle: (label: string): ReactNode => (
+      <>
+        {label}: going <span className="accent">HIGHER</span> or{" "}
+        <span className="muted-strike">lower</span>?
+      </>
+    ),
+    pendingPick: "🎯 Pick pending",
     progressOf: (pct) => `${pct}% of the campaign`,
     newRecord: "🏆 New record!",
     categoryQuestion: (value, unit) => (
