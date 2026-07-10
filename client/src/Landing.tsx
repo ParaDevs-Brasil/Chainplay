@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { LangToggle, useLang } from "./i18n";
+import { useLang } from "./i18n";
 import { celebrateCorrect } from "./celebration";
+import Navbar from "./Navbar";
 
 /* ---------- teaser jogável do hero ---------- */
 
@@ -309,23 +310,19 @@ export default function Landing() {
 
   return (
     <div className="landing">
-      <nav className="topbar">
-        <a className="logo" href="#/" aria-label="Hi-Lo">
-          Hi-<span className="accent">Lo</span>
-        </a>
-        <div className="topbar-links">
-          <a href="#como-funciona">{t.nav.how}</a>
-          <a href="#tecnologia">{t.nav.tech}</a>
-          <a href="#roadmap">{t.nav.vision}</a>
-          <a href="#faq">{t.nav.faq}</a>
-        </div>
-        <div className="topbar-actions">
-          <LangToggle />
-          <a className="btn primary small" href="#/jogar">
-            {t.nav.play}
-          </a>
-        </div>
-      </nav>
+      <Navbar
+        links={[
+          { label: t.nav.home, href: "#/", active: true },
+          { label: t.nav.how, href: "#como-funciona" },
+          { label: t.nav.tech, href: "#tecnologia" },
+          { label: t.nav.vision, href: "#roadmap" },
+          { label: t.nav.faq, href: "#faq" },
+        ]}
+        cta={{ label: t.nav.play, href: "#/jogar" }}
+      />
+
+      {/* display: contents preserva o layout flex de .landing */}
+      <main className="landing-main">
 
       {/* display: contents preserva o layout flex de .landing */}
       <main className="landing-main">

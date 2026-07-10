@@ -6,7 +6,9 @@ import {
   type GameMatch,
   type StatCategory,
 } from "./types";
-import { LangToggle, useLang, type Dict } from "./i18n";
+import { useLang, type Dict } from "./i18n";
+import Navbar from "./Navbar";
+import { teamFlag } from "./flags";
 import {
   celebrateCorrect,
   celebrateWin,
@@ -80,6 +82,16 @@ export default function Game() {
     setShowHelp(false);
     localStorage.setItem("hilo-help", "off");
   }
+
+  // fecha o modal de ajuda com Esc
+  useEffect(() => {
+    if (!showHelp) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") dismissHelp();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showHelp]);
 
   useEffect(() => {
     fetch("/api/game/matches")
@@ -255,85 +267,29 @@ export default function Game() {
       : "";
 
   return (
-    <div className="shell">
-      <header>
-        <div className="game-topline">
-          <a className="back-link" href="#/">{t.game.back}</a>
-          <LangToggle />
-        </div>
-        <h1 className="logo-heading">Hi-<span className="accent">Lo</span></h1>
-        <p className="tagline">{t.game.tagline}</p>
+    <div className="game-page">
+      <Navbar
+        links={[
+          { label: t.nav.home, href: "#/" },
+          { label: t.nav.howToPlay, onClick: () => setShowHelp(true) },
+          { label: t.nav.ranking, soon: true },
+          { label: t.nav.history, soon: true },
+        ]}
+        cta={{ label: t.game.playAgain, onClick: restart }}
+      />
+
+      <div className="shell">
+      {/* pergunta principal em primeiro: a decisão é o protagonista da tela */}
+      <header className="game-hero">
         <span className={`badge ${data?.source}`}>{sourceBadge}</span>
+        <h1 className="game-question">
+          <span className="game-cat-icon" aria-hidden="true">
+            {CATEGORY_ICONS[category]}
+          </span>{" "}
+          {t.game.questionTitle(t.game.categoryLabels[category])}
+        </h1>
+        <p className="game-sub">{t.game.categoryQuestion(currentValue, unit)}</p>
       </header>
-
-      <div className="scoreboard">
-        <div>
-          <span className="label">{t.game.round}</span>
-          <strong className="stat-pop" key={`r${round}`}>
-            {round + 1}/{totalRounds}
-          </strong>
-        </div>
-        <div>
-          <span className="label">{t.game.streak}</span>
-          <strong className="stat-pop" key={`s${streak}`}>🔥 {streak}</strong>
-        </div>
-        <div>
-          <span className="label">{t.game.best}</span>
-          <strong
-            className={`stat-pop ${isRecord && revealed ? "record-glow" : ""}`}
-            key={`b${best}`}
-          >
-            🏆 {best}
-          </strong>
-        </div>
-      </div>
-
-      <div
-        className="progress-wrap"
-        role="progressbar"
-        aria-valuenow={progress}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={t.game.round}
-      >
-        <div className="progress-bar">
-          <div className="progress-fill" style={{ width: `${progress}%` }} />
-        </div>
-        <span className="progress-label mono">{t.game.progressOf(progress)}</span>
-      </div>
-
-      {showHelp && (
-        <aside className="help-box">
-          <div className="help-head">
-            <strong>{t.game.helpTitle}</strong>
-            <button
-              className="help-close"
-              onClick={dismissHelp}
-              aria-label={t.game.helpCloseAria}
-            >
-              {t.game.helpClose}
-            </button>
-          </div>
-          <ol className="help-steps">
-            {t.game.helpSteps.map((step, i) => (
-              <li key={step}>
-                <span className="step-dot mono">{i + 1}</span>
-                {step}
-              </li>
-            ))}
-          </ol>
-        </aside>
-      )}
-
-      <div className="category">
-        <span className="icon">{CATEGORY_ICONS[category]}</span>
-        <div className="category-text">
-          <strong>{t.game.categoryLabels[category]}</strong>
-          <span className="category-question">
-            {t.game.categoryQuestion(currentValue, unit)}
-          </span>
-        </div>
-      </div>
 
       <div className="cards">
         <MatchCard
@@ -429,7 +385,88 @@ export default function Game() {
         </div>
       )}
 
+      {/* status do jogador: rodada, sequência e recorde */}
+      <div className="scoreboard">
+        <div>
+          <span className="label">{t.game.round}</span>
+          <strong className="stat-pop" key={`r${round}`}>
+            {round + 1}/{totalRounds}
+          </strong>
+        </div>
+        <div className="streak-cell">
+          <span className="label">{t.game.streak}</span>
+          <strong className="stat-pop" key={`s${streak}`}>🔥 {streak}</strong>
+          {phase === "reveal" && lastResult?.correct && !lastResult.push && (
+            <span className="streak-plus mono" key={`p${round}`} aria-hidden="true">
+              +1
+            </span>
+          )}
+        </div>
+        <div>
+          <span className="label">{t.game.best}</span>
+          <strong
+            className={`stat-pop ${isRecord && revealed ? "record-glow" : ""}`}
+            key={`b${best}`}
+          >
+            🏆 {best}
+          </strong>
+        </div>
+      </div>
+
+      <div
+        className="progress-wrap"
+        role="progressbar"
+        aria-valuenow={progress}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={t.game.round}
+      >
+        <div className="progress-bar">
+          <div className="progress-fill" style={{ width: `${progress}%` }} />
+        </div>
+        <span className="progress-label mono">{t.game.progressOf(progress)}</span>
+      </div>
+
       <footer>{t.game.gameFooter}</footer>
+      </div>
+
+      {showHelp && (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={dismissHelp}
+        >
+          <div
+            className="help-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="help-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="help-head">
+              <strong id="help-title">{t.game.helpTitle}</strong>
+              <button
+                className="help-close"
+                onClick={dismissHelp}
+                aria-label={t.game.helpCloseAria}
+              >
+                {t.game.helpClose}
+              </button>
+            </div>
+            <ol className="help-steps">
+              {t.game.helpSteps.map((step, i) => (
+                <li key={step}>
+                  <span className="step-dot mono">{i + 1}</span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+            <button className="primary help-cta" onClick={dismissHelp}>
+              {t.game.helpCta}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -478,9 +515,19 @@ function MatchCard({
       <span className="card-label">{label}</span>
       {match.stage && <span className="stage">{match.stage}</span>}
       <div className="teams">
-        <span>{match.home}</span>
+        <span className="team">
+          <span className="flag" aria-hidden="true">
+            {teamFlag(match.home)}
+          </span>
+          {match.home}
+        </span>
         <em>vs</em>
-        <span>{match.away}</span>
+        <span className="team">
+          <span className="flag" aria-hidden="true">
+            {teamFlag(match.away)}
+          </span>
+          {match.away}
+        </span>
       </div>
       <div className={`value ${revealed ? stateClass : ""}`}>
         {revealed ? value : rolling ? <RollingValue max={rollMax} /> : "?"}
@@ -490,8 +537,10 @@ function MatchCard({
         <div className="scoreline">
           {t.game.scoreline(match.stats.goals[0], match.stats.goals[1])}
         </div>
-      ) : (
+      ) : rolling ? (
         <div className="scoreline dim-hint">{t.game.hiddenHint}</div>
+      ) : (
+        <span className="pending-chip">{t.game.pendingPick}</span>
       )}
     </div>
   );
