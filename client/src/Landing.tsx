@@ -324,9 +324,6 @@ export default function Landing() {
       {/* display: contents preserva o layout flex de .landing */}
       <main className="landing-main">
 
-      {/* display: contents preserva o layout flex de .landing */}
-      <main className="landing-main">
-
       <section className="hero">
         <div className="hero-glow" aria-hidden="true" />
         <span className="badge">
