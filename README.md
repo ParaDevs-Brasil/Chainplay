@@ -1,106 +1,42 @@
-# Hi-Lo · Copa 2026
+# Jogos do ChainPlay
 
-Jogo de palpites com dados reais da Copa do Mundo 2026 via **TxLINE** (TxODDS),
-a API de dados esportivos com verificação on-chain na **Solana**.
+### **Hi-Lo**
 
-**Como funciona:** a cada rodada você vê a estatística da última partida
-(gols, escanteios, cartões amarelos ou posse de bola) e palpita se a próxima
-partida terá um valor **MAIOR ⬆** ou **MENOR ⬇**. Acertou, a sequência cresce;
-errou, fim de jogo. Rejogável pelos 104 jogos da Copa, com recorde salvo e
-placar compartilhável.
+O jogador recebe uma estatística da última partida da Copa do Mundo, como gols, escanteios, cartões ou posse de bola, e deve decidir se a próxima partida terá um valor maior ou menor. Cada acerto aumenta sua sequência e sua pontuação, enquanto um erro encerra a partida. O objetivo é sobreviver pelas 104 partidas do torneio. Todos os dados são fornecidos pela API da TxLINE, garantindo informações reais e verificáveis. É um jogo simples, rápido e altamente viciante.
 
-## Estrutura
+---
 
-```
-server/  — Node/TS: assinatura free tier on-chain (Solana) + ativação do token
-           TxLINE + proxy de dados (fixtures/scores) com cache e fallback mock
-client/  — React/Vite: o jogo Hi-Lo
-```
+### **Guess the Stats**
 
-## Rodando
+Neste desafio, o jogador tenta prever os números finais de uma partida antes que ela termine. É possível estimar estatísticas como posse de bola, escanteios, cartões e gols, acumulando pontos conforme a proximidade dos resultados reais. A pontuação é calculada automaticamente quando a API disponibiliza os dados finais. Quanto maior a precisão, maior a recompensa. O modo incentiva conhecimento esportivo e análise de desempenho das equipes.
 
-```bash
-# 1. dependências (raiz + server + client)
-npm install && npm run setup
+---
 
-# 2. configuração do backend (devnet por padrão)
-cp server/.env.example server/.env
+### **Live Challenge** em construcao
 
-# 3. sobe tudo junto: server (porta 3001) + client (porta 5173, proxy para /api)
-npm run dev
-```
+Durante as partidas, desafios rápidos aparecem em tempo real conforme novos eventos chegam pela API. O jogador pode prever quem fará o próximo gol, qual equipe conquistará o próximo escanteio ou se haverá um cartão nos minutos seguintes. Cada desafio possui tempo limitado para resposta, tornando a experiência dinâmica. Os pontos são atualizados instantaneamente após a confirmação do evento. Esse modo mantém os usuários engajados durante toda a partida.
 
-Também dá para subir separado com `npm run dev:server` e `npm run dev:client`.
+---
 
-Abra http://localhost:5173.
+### **Penalty Predictor**
 
-## Integração TxLINE (free tier da Copa)
+Sempre que uma cobrança de pênalti acontecer durante a Copa, o jogador terá poucos segundos para prever se a cobrança será convertida ou defendida. Após a conclusão da jogada, a API confirma o resultado e a pontuação é distribuída automaticamente. Sequências de acertos aumentam multiplicadores de pontos e desbloqueiam recompensas especiais. O modo transforma momentos decisivos da partida em desafios rápidos e emocionantes.
 
-Na primeira chamada de dados o servidor executa automaticamente o fluxo do
-[World Cup Free Tier](https://txline.txodds.com/documentation/worldcup):
 
-1. Cria/carrega uma keypair local em `server/.data/wallet.json`
-   (na devnet pede airdrop de SOL automaticamente);
-2. Chama `subscribe(SERVICE_LEVEL, 4)` no programa `txoracle` on-chain
-   (free tier — sem custo em TxL, só a taxa da transação);
-3. Obtém o guest JWT (`/auth/guest/start`), assina
-   `"{txSig}::{jwt}"` com a carteira e ativa o token em `/api/token/activate`;
-4. Guarda as credenciais em `server/.data/credentials.json` e as usa nos
-   headers `Authorization: Bearer` + `X-Api-Token`.
+---
 
-Também dá para rodar o fluxo manualmente: `cd server && npm run subscribe`.
+### **Guess the Team** em construcao
 
-Se a TxLINE estiver inacessível (sem rede, ativação pendente etc.), o servidor
-cai para um **dataset simulado dos 104 jogos** — o jogo continua demonstrável e
-o front indica a origem dos dados no badge do topo.
+O jogo apresenta um conjunto de estatísticas sem revelar qual seleção disputou a partida. A partir de informações como posse de bola, número de finalizações, escanteios e cartões, o jogador precisa identificar corretamente a equipe correspondente. A resposta é validada utilizando os dados oficiais da API. O modo estimula o conhecimento sobre o estilo de jogo das seleções participantes e oferece desafios variados ao longo do torneio.
 
-### Configuração (`server/.env`)
+---
 
-| Variável | Padrão | Descrição |
-| --- | --- | --- |
-| `TXLINE_NETWORK` | `devnet` | `devnet` ou `mainnet` (todos os endereços/hosts trocam juntos) |
-| `TXLINE_SERVICE_LEVEL` | `1` | `1` = Copa com delay de 60s (grátis); `12` = tempo real (grátis, só mainnet) |
-| `SOLANA_RPC_URL` | RPC público | RPC customizado, se quiser |
-| `PORT` | `3001` | Porta do backend |
+### **Survivor**
 
-> Para mainnet: coloque `TXLINE_NETWORK=mainnet`, envie ~0.01 SOL para a
-> carteira gerada (o endereço aparece no log) e reinicie.
+O objetivo é atravessar toda a Copa do Mundo sem cometer erros. Antes de cada partida, o jogador realiza uma previsão relacionada ao confronto, como vencedor ou outro evento disponível. Um único erro elimina o participante da competição, obrigando-o a reiniciar a sequência. Rankings destacam os jogadores que permaneceram vivos por mais rodadas. É um modo focado em consistência e estratégia.
 
-## Endpoints do backend
+---
 
-- `GET /api/game/status` — rede, carteira e estado da ativação TxLINE
-- `GET /api/game/matches` — partidas da Copa ordenadas com stats finais
-  (`source: "txline" | "mock"`)
+### **Infinite Hi-Lo**
 
-## Deploy na Vercel
-
-O projeto já vem configurado (`vercel.json` + funções em `api/`):
-
-- O frontend é buildado de `client/` e servido como estático;
-- `GET /api/game/matches` e `/api/game/status` viram funções serverless que
-  reutilizam o código de `server/src/` (cache vai para `/tmp`).
-
-Passos:
-
-```bash
-npm i -g vercel   # se ainda não tiver
-vercel            # deploy de preview
-vercel --prod     # produção
-```
-
-Para dados reais da TxLINE em produção, ative as credenciais localmente e
-cole no painel da Vercel (Settings → Environment Variables):
-
-```bash
-cd server && npm run subscribe
-# o script imprime TXLINE_NETWORK, TXLINE_JWT e TXLINE_API_TOKEN prontos
-```
-
-Sem essas variáveis o deploy funciona igual, servindo o dataset simulado.
-
-## Referências
-
-- Quickstart: https://txline.txodds.com/documentation/quickstart
-- Free tier da Copa: https://txline.txodds.com/documentation/worldcup
-- Feed de futebol (encoding das stats): https://txline.txodds.com/documentation/scores/soccer-feed
-- OpenAPI: https://txline.txodds.com/docs/docs.yaml
+Uma evolução do Hi-Lo tradicional que alterna automaticamente diferentes tipos de estatísticas, como gols, escanteios, posse de bola, cartões, finalizações e faltas. Essa variação impede que as partidas se tornem repetitivas e aumenta a dificuldade conforme a sequência cresce. O jogador deve manter o maior número possível de acertos consecutivos para alcançar posições de destaque no ranking global. Cada rodada utiliza dados reais da Copa do Mundo fornecidos pela API da TxLINE.
