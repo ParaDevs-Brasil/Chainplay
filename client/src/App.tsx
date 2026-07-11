@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import Game from "./Game";
+import GamesHub from "./GamesHub";
 import Landing from "./Landing";
+import WalletPage from "./WalletPage";
 
 export default function App() {
   const [route, setRoute] = useState(window.location.hash);
@@ -11,5 +13,14 @@ export default function App() {
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
-  return route === "#/jogar" ? <Game /> : <Landing />;
+  switch (route) {
+    case "#/jogar":
+      return <Game />;
+    case "#/jogos":
+      return <GamesHub />;
+    case "#/carteira":
+      return <WalletPage />;
+    default:
+      return <Landing />;
+  }
 }

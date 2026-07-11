@@ -2391,3 +2391,96 @@ button.lo:hover:not(:disabled) {
     animation: none;
   }
 }
+
+/* ---------- hub de jogos (#/jogos) ---------- */
+
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  width: 100%;
+  margin: 8px 0 24px;
+}
+
+.hub-card {
+  align-items: flex-start;
+  text-align: left;
+  gap: 10px;
+  padding: 20px;
+}
+
+.hub-card.hub-soon {
+  opacity: 0.65;
+}
+
+.hub-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.hub-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+}
+
+.hub-head strong {
+  font-size: 1.05rem;
+}
+
+.hub-desc {
+  color: var(--dim, #9aa4b2);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  margin: 0;
+  flex: 1;
+}
+
+/* ---------- claim center (#/carteira) ---------- */
+
+.ticket-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 560px;
+  margin: 8px auto 20px;
+}
+
+.ticket-card {
+  align-items: stretch;
+  text-align: left;
+  gap: 10px;
+  padding: 16px 20px;
+}
+
+.ticket-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ticket-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 14px;
+  font-size: 0.82rem;
+  color: var(--dim, #9aa4b2);
+}
+
+.ticket-claimable {
+  border-color: rgba(94, 234, 143, 0.55);
+  box-shadow: 0 0 18px rgba(94, 234, 143, 0.12);
+}
+
+.ticket-lost {
+  opacity: 0.6;
+}
+
+.ticket-claimed {
+  opacity: 0.75;
+}

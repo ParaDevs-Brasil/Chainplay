@@ -23,6 +23,8 @@ const pt = {
     howToPlay: "Como jogar",
     ranking: "Ranking",
     history: "Histórico",
+    games: "Jogos",
+    wallet: "Carteira",
     soon: "em breve",
     menuAria: "Abrir menu de navegação",
   },
@@ -449,6 +451,74 @@ const pt = {
       possession: "% de posse",
     } as Record<StatCategory, string>,
   },
+
+  hub: {
+    docTitle: "Jogos · ChainPlay",
+    title: "Escolha seu jogo",
+    sub: "Palpites com dados reais da Copa 2026 — jogue grátis ou valendo SOL na devnet.",
+    play: "Jogar →",
+    building: "em construção",
+    phaseLabel: (n: number) => `fase ${n}`,
+    games: {
+      hilo: {
+        name: "Hi-Lo",
+        desc: "A próxima partida vem MAIOR ou menor? Defenda sua sequência pelos 104 jogos da Copa.",
+      },
+      infiniteHilo: {
+        name: "Infinite Hi-Lo",
+        desc: "Categorias rotativas, multiplicador crescente e a decisão de ouro: seguir ou sacar?",
+      },
+      guessStats: {
+        name: "Guess the Stats",
+        desc: "Preveja os números finais da partida antes do apito inicial. Quanto mais perto, mais pontos.",
+      },
+      survivor: {
+        name: "Survivor",
+        desc: "Um palpite por rodada. Um erro e você está fora. Quantos sobrevivem até a final?",
+      },
+      penalty: {
+        name: "Penalty Predictor",
+        desc: "Pênalti na Copa: você tem segundos pra cravar. Gol ou defesa?",
+      },
+      liveChallenge: {
+        name: "Live Challenge",
+        desc: "Desafios relâmpago durante a partida: próximo gol, próximo escanteio, cartão nos próximos minutos.",
+      },
+      guessTeam: {
+        name: "Guess the Team",
+        desc: "Só as estatísticas na mesa. Você descobre qual seleção jogou?",
+      },
+    },
+  },
+
+  walletPage: {
+    docTitle: "Carteira · ChainPlay",
+    title: "Seus tickets",
+    sub: "Cada aposta vira um ticket-NFT na sua wallet. Quem segura o ticket resgata o prêmio.",
+    connect: "Conectar wallet",
+    connecting: "Conectando…",
+    disconnect: "Desconectar",
+    noWallet: "Nenhuma wallet Solana encontrada. Instale Phantom, Backpack ou Solflare.",
+    connectFirst: "Conecte sua wallet para ver seus tickets.",
+    loading: "Buscando seus tickets on-chain…",
+    empty: "Nenhum ticket ainda. Jogue um modo valendo SOL para ganhar o primeiro!",
+    claim: "Resgatar prêmio",
+    claiming: "Resgatando…",
+    claimed: "✓ Resgatado",
+    statusOpen: "em aberto",
+    statusClaimable: "💰 pra resgatar",
+    statusLost: "não foi dessa vez",
+    statusClaimed: "resgatado",
+    stake: "aposta",
+    payout: "prêmio",
+    estPayout: "prêmio estimado",
+    outcomeLabel: (n: number) => `palpite #${n + 1}`,
+    kindRun: "Run Hi-Lo",
+    kindMarket: "Mercado",
+    refresh: "↻ Atualizar",
+    claimError: "Falha no resgate",
+    onchainOff: "Servidor sem modo on-chain ativo no momento.",
+  },
 };
 
 export type Dict = typeof pt;
@@ -467,6 +537,8 @@ const en: Dict = {
     howToPlay: "How to play",
     ranking: "Leaderboard",
     history: "History",
+    games: "Games",
+    wallet: "Wallet",
     soon: "soon",
     menuAria: "Open navigation menu",
   },
@@ -893,6 +965,74 @@ const en: Dict = {
       yellowCards: "yellow cards",
       possession: "% possession",
     },
+  },
+
+  hub: {
+    docTitle: "Games · ChainPlay",
+    title: "Pick your game",
+    sub: "Predictions on real World Cup 2026 data — play for free or stake SOL on devnet.",
+    play: "Play →",
+    building: "under construction",
+    phaseLabel: (n: number) => `phase ${n}`,
+    games: {
+      hilo: {
+        name: "Hi-Lo",
+        desc: "Will the next match be HIGHER or lower? Defend your streak across all 104 World Cup games.",
+      },
+      infiniteHilo: {
+        name: "Infinite Hi-Lo",
+        desc: "Rotating categories, a growing multiplier and the golden question: ride on or cash out?",
+      },
+      guessStats: {
+        name: "Guess the Stats",
+        desc: "Predict the final numbers before kickoff. The closer you get, the more you score.",
+      },
+      survivor: {
+        name: "Survivor",
+        desc: "One pick per round. One mistake and you're out. How many survive until the final?",
+      },
+      penalty: {
+        name: "Penalty Predictor",
+        desc: "Penalty in the World Cup: you have seconds to call it. Goal or save?",
+      },
+      liveChallenge: {
+        name: "Live Challenge",
+        desc: "Flash challenges during the match: next goal, next corner, a card in the next minutes.",
+      },
+      guessTeam: {
+        name: "Guess the Team",
+        desc: "Only the stats on the table. Can you tell which team played?",
+      },
+    },
+  },
+
+  walletPage: {
+    docTitle: "Wallet · ChainPlay",
+    title: "Your tickets",
+    sub: "Every bet becomes a ticket-NFT in your wallet. Whoever holds the ticket claims the prize.",
+    connect: "Connect wallet",
+    connecting: "Connecting…",
+    disconnect: "Disconnect",
+    noWallet: "No Solana wallet found. Install Phantom, Backpack or Solflare.",
+    connectFirst: "Connect your wallet to see your tickets.",
+    loading: "Fetching your tickets on-chain…",
+    empty: "No tickets yet. Play a staked mode to earn your first one!",
+    claim: "Claim prize",
+    claiming: "Claiming…",
+    claimed: "✓ Claimed",
+    statusOpen: "open",
+    statusClaimable: "💰 ready to claim",
+    statusLost: "not this time",
+    statusClaimed: "claimed",
+    stake: "stake",
+    payout: "payout",
+    estPayout: "estimated payout",
+    outcomeLabel: (n: number) => `pick #${n + 1}`,
+    kindRun: "Hi-Lo Run",
+    kindMarket: "Market",
+    refresh: "↻ Refresh",
+    claimError: "Claim failed",
+    onchainOff: "Server is running without on-chain mode right now.",
   },
 };
 
