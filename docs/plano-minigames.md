@@ -105,27 +105,56 @@ da TxLINE no backend). O client nunca conhece o próximo valor antes de palpitar
 4. **Curva de sessão curta**: 1 run de Hi-Lo ≤ 3min, 1 formulário de Guess the Stats ≤ 90s, pênalti ≤ 10s. Retenção vem do ritmo do torneio (104 partidas = 104 "níveis" naturais do level design).
 5. **Free-first**: todo jogo tem modo grátis com ranking (aquisição) e o stake é opt-in por cima — o contrato entra como camada de recompensa, não como barreira.
 
-## 6. Status de execução
+## 6. Check-in de execução (atualizado em 2026-07-11, noite)
 
-**Fase 0 — entregue e validada em devnet (2026-07-11).** O que existe agora:
+### ✅ Feito
 
-- `server/src/chain/` — `client.ts` (authority + Anchor + PDAs), `markets.ts` (marketMaker
-  cria mercados 1X2 por fixture com fallback de mercados demo; resolver liquida pelo placar
-  da TxLINE), `runs.ts` (runs house-backed com seed secreta, validação server-side, gate
-  on-chain do place_bet e reciclagem de liquidez via withdraw_house), `tickets.ts`
-  (tickets por wallet cruzando NFTs × contas Bet).
-- Endpoints: `GET /api/markets`, `GET /api/tickets/:wallet`, `GET /api/runs/config`,
-  `POST /api/runs`, `GET /api/runs/:id`, `POST /api/runs/:id/guess`, `POST /api/runs/:id/cashout`,
-  `GET /api/runs/wallet/:wallet`. Crons: sync 60s / settle 15s (só fora da Vercel).
-- Client: `chain/wallet.tsx` (Phantom/Backpack/Solflare), `chain/oddies.ts` (`placeBet`/`claim`
-  com ticket-NFT), hub `#/jogos`, Claim Center `#/carteira`, componentes compartilhados em
-  `components/MatchCard.tsx`, i18n pt/en completo.
-- Validação: `npm run e2e:run` no server executa o ciclo aposta → run → resolução → claim
-  contra a devnet real. A authority precisa estar em `program/keys/devnet-deploy-wallet.json`
-  (recuperável pela seed do `keys_contract.md`).
+**Fase 0 — Fundação (completa e validada em devnet)**
+- [x] Contrato `oddies_bet` deployado/inicializado em devnet (parimutuel + house-backed, ticket-NFT)
+- [x] `server/src/chain/`: marketMaker + resolver, runService (runs house-backed com seed secreta e
+      gate on-chain), tickets por wallet, reciclagem de liquidez via `withdraw_house`
+- [x] Endpoints: `/api/markets`, `/api/tickets/:wallet`, `/api/runs*`, `/api/auth/*`, `/api/custodial/*`
+- [x] Client: hub `#/jogos`, Claim Center `#/carteira`, componentes compartilhados, i18n pt/en
 
-**Próximo passo: Fase 1** — UI do Hi-Lo apostado (tela de meta/stake consumindo
-`/api/runs/config`, fluxo place_bet → jogar → claim) e o Infinite Hi-Lo com cash-out ladder.
+**Integração TxLINE em tempo real**
+- [x] Ativação corrigida (ATA do TXL + cooldown pós-falha) — feed devnet ativo, credenciais válidas ~26 dias
+- [x] Mercados 1X2 criados só de **jogos futuros do feed real** (lookahead 7 dias); demos viram opt-in
+      e são cancelados on-chain quando o feed volta
+
+**Fase 1 (parcial) — Hi-Lo apostado jogável de ponta a ponta**
+- [x] `#/hilo-apostado`: meta/odds/stake → run → assinatura do place_bet → jogo → liquidação → claim na tela
+- [x] `#/mercados`: apostas parimutuel nos jogos futuros com % de consenso e countdown de lock
+
+**Login e contas**
+- [x] Web3 connect (Solana Wallet Adapter oficial: modal multi-wallet, auto-connect, erros visíveis)
+- [x] Login social Google (GIS + verificação de ID token) com **wallet custodial** por usuário
+- [x] Modo convidado devnet com bônus de boas-vindas fundeado pela authority
+- [x] Camada unificada `useAccount`: apostar/resgatar igual com extensão ou conta social
+
+**Qualidade e segurança**
+- [x] Suíte Anchor do contrato: 26 testes (access control + fuzzing de invariantes) — verde
+- [x] E2E de API contra devnet (`npm run e2e:full`): 25 asserções — verde
+- [x] E2Es de browser (wallet falsa via modal e convidado custodial): 8/8 cada — verdes
+- [x] Security review (`docs/security-review.md`): contrato limpo nos 6 padrões Solana; anti-drain
+      das runs; segredos no `.gitignore`
+
+### 🔜 Em aberto (pendências imediatas)
+- [ ] `GOOGLE_CLIENT_ID` / `VITE_GOOGLE_CLIENT_ID` nos `.env` (botão Google aparece sozinho ao configurar)
+- [ ] Liquidação ao vivo de um jogo real do feed (Argentina × Switzerland / France × Spain) com o
+      server rodando durante a partida — primeira validação do resolver com placar real
+- [ ] Rotacionar as seeds da devnet antes de qualquer uso além do hackathon (já circularam em texto plano)
+- [ ] Saldo da authority (~0.8 SOL devnet): recarregar antes de demos com muitos usuários
+
+### 📋 Backlog por fase (o que falta do plano)
+- [ ] **Fase 1**: Infinite Hi-Lo com cash-out ladder (multiplicador crescente + botão CASH OUT;
+      o endpoint `/cashout` já existe, falta a regra de escada e a UI)
+- [ ] **Fase 2**: Guess the Stats — palpites por proximidade (off-chain, leaderboard) + mercados
+      de faixas bucketizadas por fixture×stat
+- [ ] **Fase 3**: Survivor — meta-jogo sobre os mercados 1X2 (vida/morte derivada dos eventos on-chain)
+- [ ] **Fase 4**: Penalty Predictor — mercados relâmpago; fazer antes o spike de latência do feed ao vivo
+- [ ] **Fase 5**: Live Challenge e Guess the Team (reusam os motores das fases 4 e 1)
+- [ ] **Transversal**: leaderboards, ranking na navbar (hoje "em breve"), jogo responsável/limites,
+      restringir CORS e mover rate-limit pra storage compartilhado antes de produção
 
 ## 7. Ordem de execução sugerida (dependências)
 
