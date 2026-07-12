@@ -7,3 +7,7 @@ server/.data/
 # Segredos documentados do time (seeds da devnet) — nunca commitar
 keys_contract.md
 program/keys/
+
+# Lockfiles npm/yarn fora do versionamento (decisão do time)
+package-lock.json
+yarn.lock
