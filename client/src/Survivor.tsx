@@ -3,6 +3,7 @@ import Navbar from "./Navbar";
 import { useLang } from "./i18n";
 import { LoginPanel, useAccount, useAccountCta } from "./chain/account";
 import { formatSol } from "./chain/oddies";
+import HowTo from "./components/HowTo";
 import { celebrateCorrect } from "./celebration";
 import { playSfx } from "./sfx";
 import { teamFlag } from "./flags";
@@ -175,6 +176,8 @@ export default function Survivor() {
           <h1 className="game-question">{t.survivorGame.title}</h1>
           <p className="game-sub">{t.survivorGame.sub}</p>
         </header>
+
+        <HowTo steps={t.howto.survivor.steps} profit={t.howto.survivor.profit} />
 
         {error && <p className="dim center run-error">⚠️ {error}</p>}
         {!account.address && <LoginPanel note={t.survivorGame.connectFirst} />}

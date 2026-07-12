@@ -2521,6 +2521,8 @@ button.lo:hover:not(:disabled) {
   cursor: pointer;
   padding: 14px 8px;
   gap: 4px;
+  min-height: 0;
+  justify-content: center;
   transition: transform 0.12s, border-color 0.12s;
 }
 
@@ -2931,3 +2933,44 @@ button.lo:hover:not(:disabled) {
 .arcade-verdict { font-size: 1.2rem; font-weight: 700; margin: 0; }
 .arcade-verdict.ok { color: var(--mint); }
 .arcade-verdict.bad { color: var(--red); }
+
+/* painel "Como jogar" */
+.howto {
+  max-width: 640px;
+  margin: 0 auto 18px;
+  padding: 12px 18px;
+  text-align: left;
+  /* o .card base é flex com min-height pros cards de jogo — aqui não */
+  display: block;
+  min-height: 0;
+}
+
+.howto summary {
+  cursor: pointer;
+  font-weight: 600;
+  list-style-position: inside;
+}
+
+.howto-steps {
+  margin: 12px 0 8px;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.howto-profit {
+  margin: 8px 0 4px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+.howto-profit b { color: var(--amber); }
+
+.bucket-label {
+  margin-top: 14px;
+}

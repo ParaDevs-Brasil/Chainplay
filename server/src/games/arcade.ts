@@ -140,7 +140,7 @@ export function answerEvent(id: string, choice: number, name?: string) {
   return {
     correct,
     late,
-    secret: ev.secret,
+    secret: ev.secret as number,
     points,
     streak,
     home: ev.home,

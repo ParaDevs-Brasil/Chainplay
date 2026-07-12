@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import { useLang } from "./i18n";
 import { LoginPanel, useAccount, useAccountCta } from "./chain/account";
+import { formatSol } from "./chain/oddies";
+import HowTo from "./components/HowTo";
 import Leaderboard from "./components/Leaderboard";
 import { celebrateCorrect } from "./celebration";
 import { playSfx } from "./sfx";
@@ -17,7 +19,14 @@ interface PredictMatch {
   stage?: string;
   locksAt: number;
   secondsToLock: number;
+  /** mercado parimutuel de faixas de gols (null = só camada de pontos) */
+  marketId: string | null;
+  pools: number[];
+  totalPool: number;
+  poolPct: number[];
 }
+
+const BET_PRESETS = [0.01, 0.05, 0.1];
 
 interface MyPrediction {
   id: string;
@@ -53,6 +62,9 @@ export default function GuessStats() {
   const [guesses, setGuesses] = useState<Record<string, StatGuess>>({});
   const [sent, setSent] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState<string | null>(null);
+  const [betSol, setBetSol] = useState(BET_PRESETS[0]);
+  const [betting, setBetting] = useState<string | null>(null); // `${matchId}:${bucket}`
+  const [betPlaced, setBetPlaced] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
@@ -131,6 +143,22 @@ export default function GuessStats() {
     }
   }
 
+  async function betBucket(m: PredictMatch, bucket: number) {
+    if (!account.address || !m.marketId) return;
+    setBetting(`${m.id}:${bucket}`);
+    setError("");
+    try {
+      await account.placeBet(m.marketId, bucket, Math.round(betSol * 1e9));
+      setBetPlaced((p) => ({ ...p, [m.id]: bucket }));
+      celebrateCorrect(3);
+      playSfx("correct");
+    } catch (e) {
+      setError(String((e as Error).message));
+    } finally {
+      setBetting(null);
+    }
+  }
+
   function countdown(secs: number): string {
     const m = Math.floor(secs / 60);
     const s = Math.max(0, secs % 60);
@@ -161,8 +189,25 @@ export default function GuessStats() {
           <p className="game-sub">{t.statsGame.sub}</p>
         </header>
 
+        <HowTo steps={t.howto.stats.steps} profit={t.howto.stats.profit} />
+
         {error && <p className="dim center run-error">⚠️ {error}</p>}
         {!account.address && <LoginPanel note={t.statsGame.connectFirst} />}
+
+        {account.address && (
+          <div className="stake-row center-row">
+            <span className="staked-label-inline">{t.markets.stakeLabel}:</span>
+            {BET_PRESETS.map((s) => (
+              <button
+                key={s}
+                className={`stake-chip mono ${betSol === s ? "selected" : ""}`}
+                onClick={() => setBetSol(s)}
+              >
+                {s} SOL
+              </button>
+            ))}
+          </div>
+        )}
 
         {loading ? (
           <p className="dim center">{t.statsGame.loading}</p>
@@ -225,6 +270,34 @@ export default function GuessStats() {
                       >
                         {busy === m.id ? t.statsGame.submitting : t.statsGame.submit}
                       </button>
+                    </>
+                  )}
+
+                  {/* aposta on-chain na faixa de gols totais (parimutuel) */}
+                  {m.marketId && (
+                    <>
+                      <p className="staked-label bucket-label">{t.statsBet.title}</p>
+                      {betPlaced[m.id] !== undefined ? (
+                        <p className="dim market-ok">{t.statsBet.betOk}</p>
+                      ) : (
+                        <div className="outcome-row">
+                          {t.statsBet.buckets.map((label, i) => (
+                            <button
+                              key={i}
+                              className="outcome-btn"
+                              disabled={!account.address || betting !== null}
+                              onClick={() => betBucket(m, i)}
+                            >
+                              <span className="outcome-name">{label}</span>
+                              <span className="outcome-pct mono">{m.poolPct[i]}%</span>
+                              <small className="mono">{formatSol(m.pools[i], 4)}</small>
+                              {betting === `${m.id}:${i}` && (
+                                <small>{t.markets.betting}</small>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </>
                   )}
                 </div>

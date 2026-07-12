@@ -3,6 +3,7 @@ import Navbar from "./Navbar";
 import { useLang } from "./i18n";
 import { LoginPanel, useAccount, useAccountCta } from "./chain/account";
 import { formatSol } from "./chain/oddies";
+import HowTo from "./components/HowTo";
 import { celebrateCorrect } from "./celebration";
 import { playSfx } from "./sfx";
 import { teamFlag } from "./flags";
@@ -128,6 +129,8 @@ export default function Markets() {
           <h1 className="game-question">{t.markets.title}</h1>
           <p className="game-sub">{t.markets.sub}</p>
         </header>
+
+        <HowTo steps={t.howto.markets.steps} profit={t.howto.markets.profit} />
 
         {error && <p className="dim center run-error">⚠️ {error}</p>}
         {!account.address && <LoginPanel note={t.markets.connectFirst} />}

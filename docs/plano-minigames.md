@@ -151,12 +151,17 @@ da TxLINE no backend). O client nunca conhece o próximo valor antes de palpitar
       resolve com as odds cheias. E2E devnet verde (`e2e-infinite.ts`). Escada 100% on-chain
       fica pra v2 do contrato (mercado-sessão).
 - [x] **Fase 2**: Guess the Stats (`#/stats`) — palpites por proximidade com resultado secreto no
-      server, raio-X palpite×real e leaderboard. Mercados bucketizados on-chain ficam no backlog.
+      server, raio-X palpite×real e leaderboard + mercados parimutuel de FAIXAS de gols
+      (0–1/2–3/4+) por partida, resolvidos com o mesmo resultado secreto.
 - [x] **Fase 3**: Survivor (`#/survivor`) — pick por rodada = aposta parimutuel real no 1X2;
       vida/morte derivada da liquidação dos mercados; ranking de sobreviventes.
 - [x] **Fase 4**: Penalty Predictor (`#/penalty`) — modo demo simulado (probabilidades reais,
-      resultado secreto no server, pontos por raridade + multiplicador de sequência). Spike de
-      latência do feed ao vivo segue pendente pra versão on-chain relâmpago.
+      resultado secreto no server, pontos por raridade + multiplicador de sequência) + modo
+      VALENDO SOL: sessão house-backed de 8 pênaltis com meta 6/7/8 (paga 1.3×/2.2×/7×, um
+      place_bet por sessão via `chain/house.ts`; e2e devnet `e2e-penalty.ts` verde). Spike de
+      latência do feed ao vivo segue pendente pra versão relâmpago por pênalti real.
+- [x] **Transparência**: painel "Como jogar" (passos + de onde vem o prêmio/margem da casa) em
+      todas as páginas jogáveis (Hi-Lo apostado, Infinite, Mercados, Stats, Survivor, Penalty).
 - [ ] **Fase 5**: Live Challenge e Guess the Team — **em construção no hub**; motores prontos no
       server (`/api/arcade/live`, `/api/quiz`), falta só a UI (a do Live reusa `Arcade.tsx`)
 - [ ] **Transversal**: leaderboards por jogo ✅ (`games/leaderboard.ts`); falta ranking global na

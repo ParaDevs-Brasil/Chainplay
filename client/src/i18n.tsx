@@ -753,6 +753,94 @@ const pt = {
     plays: "jogadas",
     you: "você",
   },
+
+  howto: {
+    title: "📖 Como jogar",
+    profitLabel: "De onde vem o prêmio",
+    staked: {
+      steps: [
+        "Escolha a meta de acertos seguidos (3 a 20) e quanto quer apostar — as odds sobem com a meta.",
+        "Assine a aposta na sua wallet: ela vira um ticket-NFT e o SOL entra no vault do mercado on-chain.",
+        "Palpite se a próxima partida tem MAIS ou MENOS que a atual (gols, escanteios, cartões, posse). Empate não quebra a sequência.",
+        "Bateu a meta? O mercado liquida on-chain e você resgata o prêmio com o ticket.",
+      ],
+      profit:
+        "A casa fundeia o prêmio antes de você apostar (odds fixas, ex.: meta 10 paga 6×). Perdeu ou desistiu, o stake fica com a casa — é a margem embutida nas odds.",
+    },
+    infinite: {
+      steps: [
+        "Escolha só o stake — sem meta: cada acerto sobe um degrau na escada (1,2× até 28×).",
+        "Assine a aposta (ticket-NFT no mercado on-chain, igual ao Hi-Lo apostado).",
+        "A cada acerto decida: CASH OUT garante o valor do degrau atual, ou siga pro próximo e arrisque tudo.",
+        "Errou sem sacar = perdeu o stake. Chegou ao 12º degrau = 28× direto do mercado.",
+      ],
+      profit:
+        "Sacando no meio, o mercado é anulado (o ticket devolve seu stake) e a casa paga o lucro do degrau na hora. As odds pagam menos que o justo estatístico — essa é a margem da casa.",
+    },
+    markets: {
+      steps: [
+        "Escolha um jogo futuro da Copa e o stake.",
+        "Aposte em casa, empate ou fora — a aposta vira ticket-NFT e o SOL entra no pote comunitário.",
+        "As % mostram onde a comunidade está apostando (as odds emergem do pote).",
+        "Após o jogo, quem acertou divide o pote proporcional ao stake — resgate na Carteira.",
+      ],
+      profit:
+        "Modelo parimutuel: o prêmio sai do pote dos perdedores. A plataforma fica com a taxa de 10% de cada aposta.",
+    },
+    stats: {
+      steps: [
+        "Antes do lock, crave os números finais: gols, escanteios, cartões e posse.",
+        "Pontos por proximidade (máx 100) alimentam o ranking — de graça.",
+        "Quer valer SOL? Aposte na faixa de gols totais (0–1 / 2–3 / 4+) do mercado parimutuel da partida.",
+        "No reveal, veja o raio-X palpite × real; acertou a faixa, divida o pote e resgate na Carteira.",
+      ],
+      profit:
+        "A camada de pontos é grátis. Na aposta em faixas, o prêmio sai do pote de quem errou; a plataforma fica com a taxa de 10%.",
+    },
+    survivor: {
+      steps: [
+        "Uma rodada = um pick: escolha UM jogo e crave casa, empate ou fora.",
+        "O pick é uma aposta real no mercado 1X2 (assine o place_bet — ticket-NFT na carteira).",
+        "Acertou, sobrevive e avança; jogo anulado devolve o stake e não conta.",
+        "Errou UM pick — eliminado da temporada. Quem sobreviver mais rodadas lidera o ranking.",
+      ],
+      profit:
+        "Cada pick certo também paga como aposta 1X2 normal (divide o pote). A plataforma fica com a taxa de 10% de cada pick.",
+    },
+    penalty: {
+      steps: [
+        "Modo grátis: pênalti simulado, 8 segundos pra cravar GOL ou DEFESA — defesa é rara e vale mais pontos; acertos seguidos multiplicam.",
+        "Valendo SOL: escolha a meta (6, 7 ou 8 acertos em 8 pênaltis) e o stake, e assine a aposta.",
+        "Responda os 8 pênaltis dentro do timer — estourou o tempo, conta como erro.",
+        "Bateu a meta? O mercado liquida on-chain e você resgata o prêmio com o ticket.",
+      ],
+      profit:
+        "A casa fundeia o prêmio antes (6/8 paga 1,3× · 7/8 paga 2,2× · 8/8 paga 7×) e lucra a margem sobre o justo estatístico + o stake das sessões perdidas.",
+    },
+  },
+
+  statsBet: {
+    title: "💰 Valendo SOL: faixa de gols totais",
+    buckets: ["0–1 gols", "2–3 gols", "4+ gols"],
+    betOk: "✅ Aposta na faixa feita! Ticket-NFT na sua carteira.",
+    connectFirst: "Conecte a wallet pra apostar nas faixas.",
+  },
+
+  penaltySession: {
+    freeTab: "🎮 Grátis (ranking)",
+    stakedTab: "💰 Valendo SOL",
+    chooseTarget: "Meta de acertos nos 8 pênaltis",
+    targetLabel: (n: number) => `${n} de 8`,
+    start: "🥅 Criar sessão apostada",
+    creating: "Criando mercado on-chain…",
+    progress: (shots: number, total: number, hits: number) =>
+      `pênalti ${Math.min(shots + 1, total)} de ${total} · ${hits} acerto(s)`,
+    needed: (n: number) => `faltam ${n} pra meta`,
+    wonTitle: "🏆 Meta batida!",
+    lostTitle: "💀 Meta perdida!",
+    lostSub: "O stake fica com a casa. Bora de novo?",
+    resume: "Sessão em andamento retomada.",
+  },
 };
 
 export type Dict = typeof pt;
@@ -1501,6 +1589,94 @@ const en: Dict = {
     points: "pts",
     plays: "plays",
     you: "you",
+  },
+
+  howto: {
+    title: "📖 How to play",
+    profitLabel: "Where the prize comes from",
+    staked: {
+      steps: [
+        "Pick a streak target (3 to 20) and your stake — odds grow with the target.",
+        "Sign the bet in your wallet: it becomes a ticket-NFT and the SOL goes into the on-chain market vault.",
+        "Guess if the next match has MORE or LESS than the current one (goals, corners, cards, possession). Ties don't break your streak.",
+        "Hit the target? The market settles on-chain and you claim the prize with your ticket.",
+      ],
+      profit:
+        "The house funds the prize before you bet (fixed odds, e.g. target 10 pays 6×). Lose or give up and the stake stays with the house — that's the margin built into the odds.",
+    },
+    infinite: {
+      steps: [
+        "Choose only the stake — no target: every hit climbs a rung on the ladder (1.2× up to 28×).",
+        "Sign the bet (ticket-NFT on the on-chain market, same as staked Hi-Lo).",
+        "After every hit decide: CASH OUT locks the current rung, or push to the next and risk it all.",
+        "Miss before cashing out = stake lost. Reach rung 12 = 28× straight from the market.",
+      ],
+      profit:
+        "Cashing out mid-ladder voids the market (the ticket refunds your stake) and the house pays the rung profit instantly. Odds pay below the statistical fair value — that's the house margin.",
+    },
+    markets: {
+      steps: [
+        "Pick an upcoming World Cup match and your stake.",
+        "Bet home, draw or away — the bet becomes a ticket-NFT and the SOL joins the community pool.",
+        "The % show where the community is betting (odds emerge from the pool).",
+        "After the match, winners split the pool pro-rata — claim in your Wallet.",
+      ],
+      profit:
+        "Parimutuel model: prizes come from the losers' pool. The platform keeps a 10% fee per bet.",
+    },
+    stats: {
+      steps: [
+        "Before lock, call the final numbers: goals, corners, cards and possession.",
+        "Proximity points (max 100) feed the leaderboard — for free.",
+        "Want SOL on it? Bet on the total-goals bucket (0–1 / 2–3 / 4+) of the match's parimutuel market.",
+        "At reveal, check your call × actual X-ray; hit the bucket, split the pool and claim in your Wallet.",
+      ],
+      profit:
+        "The points layer is free. On bucket bets the prize comes from the losing buckets; the platform keeps the 10% fee.",
+    },
+    survivor: {
+      steps: [
+        "One round = one pick: choose ONE match and call home, draw or away.",
+        "The pick is a real bet on the 1X2 market (sign the place_bet — ticket-NFT in your wallet).",
+        "Correct pick survives and advances; voided matches refund and don't count.",
+        "Miss ONE pick — eliminated for the season. Most rounds survived leads the ranking.",
+      ],
+      profit:
+        "Each correct pick also pays as a normal 1X2 bet (splits the pool). The platform keeps the 10% fee per pick.",
+    },
+    penalty: {
+      steps: [
+        "Free mode: simulated penalty, 8 seconds to call GOAL or SAVE — saves are rare and worth more; consecutive hits multiply.",
+        "Staked: choose the target (6, 7 or 8 hits out of 8 penalties) and stake, and sign the bet.",
+        "Answer all 8 penalties within the timer — running out counts as a miss.",
+        "Hit the target? The market settles on-chain and you claim the prize with your ticket.",
+      ],
+      profit:
+        "The house funds the prize upfront (6/8 pays 1.3× · 7/8 pays 2.2× · 8/8 pays 7×) and earns the margin over fair value plus the stake of lost sessions.",
+    },
+  },
+
+  statsBet: {
+    title: "💰 Staked: total goals bucket",
+    buckets: ["0–1 goals", "2–3 goals", "4+ goals"],
+    betOk: "✅ Bucket bet placed! Ticket-NFT in your wallet.",
+    connectFirst: "Connect your wallet to bet on buckets.",
+  },
+
+  penaltySession: {
+    freeTab: "🎮 Free (ranking)",
+    stakedTab: "💰 Staked",
+    chooseTarget: "Hit target across the 8 penalties",
+    targetLabel: (n: number) => `${n} of 8`,
+    start: "🥅 Create staked session",
+    creating: "Creating on-chain market…",
+    progress: (shots: number, total: number, hits: number) =>
+      `penalty ${Math.min(shots + 1, total)} of ${total} · ${hits} hit(s)`,
+    needed: (n: number) => `${n} to go for the target`,
+    wonTitle: "🏆 Target hit!",
+    lostTitle: "💀 Target missed!",
+    lostSub: "The stake stays with the house. Run it back?",
+    resume: "Ongoing session resumed.",
   },
 };
 

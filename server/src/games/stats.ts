@@ -1,17 +1,28 @@
 import crypto from "node:crypto";
+import { BN } from "@coral-xyz/anchor";
+import { SystemProgram } from "@solana/web3.js";
+import { configPda, getChain, marketPda, vaultPda } from "../chain/client.js";
 import { JsonFileStore } from "../store/jsonFile.js";
 import { addPoints } from "./leaderboard.js";
 import { getGameData } from "./matches.js";
 
 /**
- * Guess the Stats (Fase 2, camada de pontos): o jogador crava os números
- * finais da partida antes do lock e ganha pontos por proximidade.
+ * Guess the Stats (Fase 2): duas camadas por partida —
+ *  - pontos por proximidade (grátis, alimenta o leaderboard);
+ *  - aposta parimutuel on-chain nas FAIXAS de gols totais (0–1 / 2–3 / 4+),
+ *    resolvida com o mesmo resultado secreto do server. A casa lucra a taxa
+ *    de 10% de cada place_bet (vai pra team wallet direto no contrato).
  *
  * Motor de rodadas: mantém N partidas "prevísiveis" abertas de cada vez,
  * sorteadas do dataset (TxLINE ou mock) com estatísticas finais SECRETAS no
  * server. O lock é curto (estilo demo dos mercados 1X2) pra sessão ser jogável
  * na hora; com o feed ao vivo validado, o mesmo motor recebe kickoffs reais.
  */
+
+/** faixa de gols totais → outcome do mercado parimutuel */
+export function goalBucket(totalGoals: number): number {
+  return totalGoals <= 1 ? 0 : totalGoals <= 3 ? 1 : 2;
+}
 
 export interface StatGuess {
   goals: number;
@@ -30,6 +41,10 @@ interface PredictMatch {
   /** números finais — nunca saem pro client antes do reveal */
   secret: StatGuess;
   settled: boolean;
+  /** mercado parimutuel de faixas de gols (ausente com a chain desativada) */
+  marketId?: string;
+  marketPda?: string;
+  marketSettled?: boolean;
 }
 
 export interface PredictionRecord {
@@ -74,6 +89,42 @@ function scoreStat(stat: keyof StatGuess, guess: number, actual: number): number
   }
 }
 
+/** Mercado parimutuel de 3 faixas de gols pra partida — melhor esforço:
+ *  sem chain (ou RPC fora) a partida segue jogável só na camada de pontos. */
+async function createBucketMarket(
+  closeTs: number,
+  resolveAfterTs: number
+): Promise<{ marketId: string; marketPda: string } | null> {
+  const chain = getChain();
+  if (!chain) return null;
+  try {
+    const marketId = new BN(Date.now()).muln(1000).addn(crypto.randomInt(1000));
+    const market = marketPda(marketId);
+    await chain.program.methods
+      .createMarket(
+        marketId,
+        marketId,
+        { parimutuel: {} },
+        3,
+        Array(8).fill(new BN(0)),
+        new BN(closeTs),
+        new BN(resolveAfterTs)
+      )
+      .accounts({
+        config: configPda(),
+        market,
+        vault: vaultPda(market),
+        authority: chain.authority.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+    return { marketId: marketId.toString(), marketPda: market.toBase58() };
+  } catch (err) {
+    console.warn(`[stats] falha criando mercado de faixas: ${(err as Error).message}`);
+    return null;
+  }
+}
+
 async function refillMatches(data: Data) {
   const open = data.matches.filter((m) => !m.settled);
   if (open.length >= OPEN_TARGET) return;
@@ -82,13 +133,15 @@ async function refillMatches(data: Data) {
   for (let i = open.length; i < OPEN_TARGET; i++) {
     const pick = pool[crypto.randomInt(pool.length)];
     const locksAt = now + LOCK_MIN[i % LOCK_MIN.length] * 60;
+    const revealsAt = locksAt + REVEAL_AFTER_LOCK_S;
+    const market = await createBucketMarket(locksAt, revealsAt);
     data.matches.push({
       id: crypto.randomUUID(),
       home: pick.home,
       away: pick.away,
       stage: pick.stage,
       locksAt,
-      revealsAt: locksAt + REVEAL_AFTER_LOCK_S,
+      revealsAt,
       secret: {
         goals: pick.stats.goals[0] + pick.stats.goals[1],
         corners: pick.stats.corners[0] + pick.stats.corners[1],
@@ -96,14 +149,37 @@ async function refillMatches(data: Data) {
         possession: pick.stats.possession?.[0] ?? 50,
       },
       settled: false,
+      ...(market ?? {}),
     });
   }
 }
 
-function settleDue(data: Data) {
+async function settleDue(data: Data) {
   const now = Math.floor(Date.now() / 1000);
   for (const match of data.matches.filter((m) => !m.settled && now >= m.revealsAt)) {
     match.settled = true;
+    // resolve o mercado de faixas com o mesmo resultado secreto (parimutuel
+    // sem vencedores vira Voided no contrato: todo mundo recupera o stake)
+    if (match.marketId && !match.marketSettled) {
+      const chain = getChain();
+      if (chain) {
+        try {
+          await chain.program.methods
+            .resolveMarket(goalBucket(match.secret.goals))
+            .accounts({
+              config: configPda(),
+              market: marketPda(new BN(match.marketId)),
+              authority: chain.authority.publicKey,
+            })
+            .rpc();
+          match.marketSettled = true;
+        } catch (err) {
+          console.warn(
+            `[stats] falha resolvendo mercado ${match.marketId}: ${(err as Error).message}`
+          );
+        }
+      }
+    }
     for (const p of data.predictions.filter(
       (pr) => pr.matchId === match.id && pr.score == null
     )) {
@@ -136,7 +212,7 @@ function settleDue(data: Data) {
 /** Cron/lazy: liquida o que venceu e mantém a fila de partidas cheia. */
 export async function syncStatsGame() {
   const data = store.load();
-  settleDue(data);
+  await settleDue(data);
   await refillMatches(data);
   store.save();
 }
@@ -144,18 +220,46 @@ export async function syncStatsGame() {
 export async function listPredictable() {
   await syncStatsGame();
   const now = Math.floor(Date.now() / 1000);
-  return store
+  const open = store
     .load()
     .matches.filter((m) => !m.settled && m.locksAt > now)
-    .sort((a, b) => a.locksAt - b.locksAt)
-    .map((m) => ({
+    .sort((a, b) => a.locksAt - b.locksAt);
+
+  // pools dos mercados de faixa (consenso da comunidade por faixa)
+  const chain = getChain();
+  const withMarket = open.filter((m) => m.marketId);
+  const pools = new Map<string, number[]>();
+  if (chain && withMarket.length) {
+    try {
+      const accs: any[] = await (chain.program.account as any).market.fetchMultiple(
+        withMarket.map((m) => marketPda(new BN(m.marketId!)))
+      );
+      withMarket.forEach((m, i) => {
+        if (accs[i]) {
+          pools.set(m.id, accs[i].pools.slice(0, 3).map((p: BN) => p.toNumber()));
+        }
+      });
+    } catch {
+      /* RPC fora: segue sem pools */
+    }
+  }
+
+  return open.map((m) => {
+    const p = pools.get(m.id) ?? [0, 0, 0];
+    const total = p.reduce((a, b) => a + b, 0);
+    return {
       id: m.id,
       home: m.home,
       away: m.away,
       stage: m.stage,
       locksAt: m.locksAt,
       secondsToLock: Math.max(0, m.locksAt - now),
-    }));
+      marketId: m.marketId ?? null,
+      pools: p,
+      totalPool: total,
+      poolPct: p.map((x) => (total ? Math.round((x / total) * 100) : 0)),
+    };
+  });
 }
 
 function validGuess(g: unknown): g is StatGuess {

@@ -3,6 +3,7 @@ import Navbar from "./Navbar";
 import { useLang } from "./i18n";
 import { LoginPanel, useAccount, useAccountCta } from "./chain/account";
 import { formatSol, type PlacedBet } from "./chain/oddies";
+import HowTo from "./components/HowTo";
 import { ResultBanner, RollingValue, type Guess } from "./components/MatchCard";
 import { celebrateCorrect, celebrateWin, prefersReducedMotion } from "./celebration";
 import { playSfx } from "./sfx";
@@ -335,6 +336,11 @@ export default function StakedHilo({ mode = "target" }: { mode?: RunMode }) {
           </h1>
           <p className="game-sub">{infinite ? t.infinite.sub : t.staked.sub}</p>
         </header>
+
+        <HowTo
+          steps={infinite ? t.howto.infinite.steps : t.howto.staked.steps}
+          profit={infinite ? t.howto.infinite.profit : t.howto.staked.profit}
+        />
 
         {error && <p className="dim center run-error">⚠️ {error}</p>}
 
