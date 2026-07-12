@@ -549,6 +549,10 @@ const pt = {
     seeWallet: "Ver meus tickets →",
     error: "Algo deu errado",
     devnetNote: "SOL de devnet — sem valor real. Pegue no faucet.solana.com.",
+    bettingAs: (name: string) => `Apostando como ${name}`,
+    balanceLabel: "saldo",
+    insufficient: (stake: string) =>
+      `Saldo insuficiente pra apostar ${stake} — pegue SOL de devnet no faucet.solana.com.`,
   },
 
   markets: {
@@ -1150,6 +1154,10 @@ const en: Dict = {
     seeWallet: "See my tickets →",
     error: "Something went wrong",
     devnetNote: "Devnet SOL — no real value. Grab some at faucet.solana.com.",
+    bettingAs: (name: string) => `Betting as ${name}`,
+    balanceLabel: "balance",
+    insufficient: (stake: string) =>
+      `Not enough balance to stake ${stake} — grab devnet SOL at faucet.solana.com.`,
   },
 
   markets: {

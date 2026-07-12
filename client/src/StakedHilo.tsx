@@ -3,7 +3,7 @@ import Navbar from "./Navbar";
 import { useLang } from "./i18n";
 import { LoginPanel, useAccount, useAccountCta } from "./chain/account";
 import { formatSol, type PlacedBet } from "./chain/oddies";
-import { RollingValue } from "./components/MatchCard";
+import { ResultBanner, RollingValue, type Guess } from "./components/MatchCard";
 import { celebrateCorrect, celebrateWin, prefersReducedMotion } from "./celebration";
 import { playSfx } from "./sfx";
 import { teamFlag } from "./flags";
@@ -76,7 +76,11 @@ export default function StakedHilo() {
     card: RunCardInfo;
     correct: boolean;
     push: boolean;
+    /** valor da carta anterior e palpite, pro banner de resultado */
+    prevValue: number;
+    guess: Guess;
   } | null>(null);
+  const [lastGuess, setLastGuess] = useState<Guess | null>(null);
   const [error, setError] = useState("");
   const [settled, setSettled] = useState(false);
   const [claiming, setClaiming] = useState(false);
@@ -131,6 +135,10 @@ export default function StakedHilo() {
   const oddsBps = oddsTable[String(target)] ?? 0;
   const stakeLamports = Math.round(stakeSol * 1e9);
   const potential = Math.floor((stakeLamports * 0.9 * oddsBps) / 10_000);
+  // saldo conhecido via /api/auth/me (custodial ou sessão wallet/SIWS);
+  // null = desconhecido (não bloqueia — a transação valida on-chain)
+  const balance = account.custodialBalance;
+  const insufficient = balance != null && balance < stakeLamports;
 
   async function createRun() {
     if (!account.address) return;
@@ -169,10 +177,18 @@ export default function StakedHilo() {
     if (!run || phase !== "playing") return;
     setError("");
     playSfx("click");
+    const prevValue = run.current?.value ?? 0;
+    setLastGuess(dir);
     try {
       const r = await api(`/api/runs/${run.id}/guess`, { dir });
       const apply = () => {
-        setLastReveal({ card: r.revealed, correct: r.correct, push: r.push });
+        setLastReveal({
+          card: r.revealed,
+          correct: r.correct,
+          push: r.push,
+          prevValue,
+          guess: dir,
+        });
         setRun((old) => ({ ...(old as RunState), ...r }));
         if (r.status === "won") {
           setPhase("won");
@@ -233,6 +249,7 @@ export default function StakedHilo() {
     setRun(null);
     setTicket(null);
     setLastReveal(null);
+    setLastGuess(null);
     setSettled(false);
     setClaimed(false);
     setError("");
@@ -306,13 +323,27 @@ export default function StakedHilo() {
             {!account.address ? (
               <LoginPanel note={t.staked.connectFirst} />
             ) : (
-              <button
-                className="primary staked-cta"
-                disabled={phase === "creating" || !oddsBps}
-                onClick={createRun}
-              >
-                {phase === "creating" ? t.staked.creating : t.staked.start}
-              </button>
+              <>
+                <p className="dim center betting-as">
+                  {t.staked.bettingAs(
+                    account.displayName ?? `${account.address.slice(0, 4)}…`
+                  )}
+                  {balance != null &&
+                    ` · ${t.staked.balanceLabel}: ${formatSol(balance)}`}
+                </p>
+                {insufficient && (
+                  <p className="dim center run-error">
+                    ⚠️ {t.staked.insufficient(formatSol(stakeLamports))}
+                  </p>
+                )}
+                <button
+                  className="primary staked-cta"
+                  disabled={phase === "creating" || !oddsBps || insufficient}
+                  onClick={createRun}
+                >
+                  {phase === "creating" ? t.staked.creating : t.staked.start}
+                </button>
+              </>
             )}
             <p className="dim devnet-note">{t.staked.devnetNote}</p>
           </div>
@@ -342,11 +373,40 @@ export default function StakedHilo() {
         {(phase === "playing" || phase === "rolling") && run?.current && (
           <>
             <div className="cards">
-              <RunCard card={run.current} revealed label={t.game.lastMatch} t={t} />
+              <RunCard
+                card={run.current}
+                revealed
+                label={t.game.lastMatch}
+                t={t}
+                stateClass={
+                  phase === "playing" && lastReveal
+                    ? lastReveal.correct
+                      ? "flash-ok"
+                      : "flash-bad"
+                    : ""
+                }
+              />
               <div className="vs">
+                {/* resultado do palpite anterior: acertou/errou e a comparação */}
+                {phase === "playing" && lastReveal && (
+                  <ResultBanner
+                    result={{ correct: lastReveal.correct, push: lastReveal.push }}
+                    guess={lastReveal.guess}
+                    current={lastReveal.prevValue}
+                    next={lastReveal.card.value ?? 0}
+                    unit={t.game.categoryUnits[lastReveal.card.category]}
+                    t={t}
+                  />
+                )}
                 <div className="guess-buttons">
                   <button
-                    className="hi"
+                    className={`hi ${
+                      phase === "rolling"
+                        ? lastGuess === "higher"
+                          ? "picked"
+                          : "dim"
+                        : ""
+                    }`}
                     disabled={phase === "rolling"}
                     onClick={() => guess("higher")}
                   >
@@ -354,7 +414,13 @@ export default function StakedHilo() {
                     <small>{t.game.moreThan(run.current.value ?? 0)}</small>
                   </button>
                   <button
-                    className="lo"
+                    className={`lo ${
+                      phase === "rolling"
+                        ? lastGuess === "lower"
+                          ? "picked"
+                          : "dim"
+                        : ""
+                    }`}
                     disabled={phase === "rolling"}
                     onClick={() => guess("lower")}
                   >
@@ -425,6 +491,17 @@ export default function StakedHilo() {
         {(phase === "lost" || phase === "expired") && (
           <div className="endgame">
             <h2>{phase === "lost" ? t.staked.lostTitle : t.staked.expiredTitle}</h2>
+            {/* mostra a carta que encerrou a run: palpite × valor real */}
+            {phase === "lost" && lastReveal && !lastReveal.correct && (
+              <ResultBanner
+                result={{ correct: false, push: false }}
+                guess={lastReveal.guess}
+                current={lastReveal.prevValue}
+                next={lastReveal.card.value ?? 0}
+                unit={t.game.categoryUnits[lastReveal.card.category]}
+                t={t}
+              />
+            )}
             <p>{phase === "lost" ? t.staked.lostSub : t.staked.betExpired}</p>
             <div className="endgame-actions">
               <button className="primary" onClick={reset}>
@@ -451,6 +528,7 @@ function RunCard({
   rollMax = 10,
   label,
   t,
+  stateClass = "",
 }: {
   card: RunCardInfo;
   revealed: boolean;
@@ -458,9 +536,14 @@ function RunCard({
   rollMax?: number;
   label: string;
   t: ReturnType<typeof useLang>["t"];
+  stateClass?: string;
 }) {
   return (
-    <div className={`card ${revealed ? "revealed" : "hidden-value"}`}>
+    <div
+      className={`card ${revealed ? "revealed" : "hidden-value"} ${
+        stateClass === "flash-bad" ? "wrong-shake" : ""
+      }`}
+    >
       <span className="card-label">{label}</span>
       <div className="teams">
         <span className="team">
@@ -477,7 +560,7 @@ function RunCard({
           {card.away}
         </span>
       </div>
-      <div className="value">
+      <div className={`value ${revealed ? stateClass : ""}`}>
         {revealed ? card.value : rolling ? <RollingValue max={rollMax} /> : "?"}
       </div>
       <div className="value-unit">
