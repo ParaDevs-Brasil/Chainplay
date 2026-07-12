@@ -52,10 +52,24 @@
 
 ### Apontamentos abertos (para as próximas fases)
 
-1. **Autorização das runs por UUID** — quem tiver o id da run pode dar palpites nela. UUIDv4 (122 bits) é impraticável de adivinhar e não vaza em endpoint público, mas o correto para produção é exigir assinatura da wallet dona (challenge assinado) nos endpoints de `guess`/`cashout`.
+1. ~~**Autorização das runs por UUID** — quem tiver o id da run pode dar palpites nela. UUIDv4 (122 bits) é impraticável de adivinhar e não vaza em endpoint público~~ — **correção (2026-07-12): a suposição acima estava errada, ver achado #5 abaixo.** `GET /api/runs/wallet/:wallet` vaza o `id` (e o valor da carta atual) sem autenticação, tornando o UUID descobrível a partir da wallet pública da vítima.
 2. **CORS aberto** (`app.use(cors())`) — ok para hackathon; restringir origem em produção.
 3. **Sem TLS/secrets management** — `.data/` guarda credenciais e a wallet do server em disco plano; para produção, usar secret manager.
 4. **Rate limit é em memória** — reinicia com o processo; para produção, mover para armazenamento compartilhado.
+
+### Achado confirmado — revisão de 2026-07-12 (camada de integração backend↔contrato)
+
+| # | Achado | Severidade | Status |
+|---|---|---|---|
+| 5 | **IDOR em `/api/runs/:id/guess`, `/api/runs/:id/cashout` e `GET /api/runs/wallet/:wallet`** — nenhuma das três exige `requireSession` (diferente de `custodial.routes.ts`, que aplica `requireChain, requireSession` a todas as rotas). `GET /api/runs/wallet/:wallet` devolve `id` da run ativa e o valor da carta atual já revelado sem autenticação; `guessRun`/`cashoutRun` (`server/src/chain/runs.ts`) não comparam o chamador contra o dono da run. Um atacante que só conhece a wallet pública da vítima (não é segredo em dApp Solana) consegue descobrir o `id` e decidir a jogada ou forçar cashout prematuro em nome dela. O `finalOutcome` definido nessas rotas é liquidado on-chain via `settleRuns()` → `resolveMarket()` — dano financeiro real, não apenas de UI. | **ALTO** | 🔴 Aberto — corrigir antes de qualquer uso além do hackathon |
+| 6 | **IDOR no Penalty Predictor** (`server/src/http/routes/arcade.routes.ts:79-107`) — mesmo padrão do achado #5, replicado no jogo novo "Penalty valendo SOL". `GET /penalty/sessions/:wallet` (linha 79) vaza o `id` da sessão a partir da wallet pública sem auth; `POST /penalty/session/:id/shot` (89-98) e `/answer` (100-107) deixam qualquer um decidir os chutes de outra sessão — `nextShot`/`answerShot` (`server/src/games/penaltySession.ts:171,202`) não comparam o chamador contra `SessionRecord.wallet`. Confirmado que a sessão só existe após stake real confirmado on-chain (`createSession`, `penaltySession.ts:87-141`) e que o `finalOutcome` forjado é liquidado de verdade via `settlePenaltySessions()` → `settleHouseMarket()` → `resolveMarket()` (`penaltySession.ts:230-261`, `chain/house.ts:114-149`) — dano financeiro real idêntico ao #5. | **ALTO** | 🔴 Aberto |
+| 7 | **IDOR no Survivor** (`server/src/http/routes/survivor.routes.ts:19-29`) — `POST /pick` aceita `wallet`/`outcome` livres do body sem `requireSession`; `makePick` (`server/src/games/survivor.ts:67-105`) não valida posse da wallet, permitindo forjar ou bloquear ("1 pick por rodada") o pick de outra pessoa. Verificado que **não há prêmio/payout real** atrelado ao status `survived`/`eliminated` (é só estado de leaderboard/temporada em `survivor.json`) e que a aposta real em SOL é feita à parte pelo client on-chain — o impacto é corrupção de estado cosmético, não perda financeira. | **BAIXO** | 🔴 Aberto |
+
+**Correção recomendada (#5 e #6, mesmo padrão):** exigir `requireSession` nas rotas de `runs` (`server/src/http/routes/runs.routes.ts:53` GET wallet, `:63-76` guess, `:78-87` cashout) e nas de `penalty` (`arcade.routes.ts:79,83,89,100`); amarrar `RunRecord`/`SessionRecord` ao `userId` da sessão (não só à string `wallet` do body) e validar posse antes de qualquer leitura ou escrita. Reconfirmado em 2026-07-12 após o commit `9331c1f` (fix de run órfã) — esse commit só mexeu na expiração de `awaiting_bet`, não adicionou auth; o achado #5 permanece aberto, e o padrão foi replicado no Penalty Predictor pelos mesmos autores (commits `8f67b16`/`9450715`).
+
+**Correção recomendada (#7):** exigir `requireSession` em `POST /api/survivor/pick`, usar a wallet da sessão autenticada em vez da string do body — prioridade menor que #5/#6 por não haver fundos em risco, mas vale corrigir antes de qualquer sistema de prêmio ser associado ao Survivor no futuro.
+
+Ver detalhamento completo (comportamento atual, código sugerido) para os três achados em `docs/audit-log-integracao.md`.
 
 ## 3. Evidências
 
