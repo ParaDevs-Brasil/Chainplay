@@ -198,12 +198,21 @@ function Bridge({
     setError(null);
     // 1) wallets reconhecidas pelo Wallet Standard → modal oficial
     if (anyInstalled) {
-      wantConnect.current = true;
-      if (adapter.wallet && !adapter.connected) {
-        wantConnect.current = false;
+      const chosenReady =
+        adapter.wallet &&
+        (adapter.wallet.readyState === "Installed" ||
+          adapter.wallet.readyState === "Loadable");
+      // reconecta direto só se a seleção anterior existe NESTE navegador
+      if (chosenReady && !adapter.connected) {
         await adapter.connect().catch((e) => setError(connectErrorMessage(e)));
         return;
       }
+      // seleção antiga de outra wallet (ex.: Phantom salvo no localStorage
+      // antes de instalar a Solflare) — descarta e deixa o usuário escolher
+      if (adapter.wallet && !chosenReady) {
+        adapter.select(null);
+      }
+      wantConnect.current = true;
       setVisible(true);
       return;
     }
