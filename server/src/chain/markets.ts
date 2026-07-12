@@ -21,7 +21,7 @@ export const OUTCOME_HOME = 0;
 export const OUTCOME_DRAW = 1;
 export const OUTCOME_AWAY = 2;
 
-const LOOKAHEAD_MS = 48 * 60 * 60 * 1000; // cria mercados até 48h antes do kickoff
+const LOOKAHEAD_MS = 7 * 24 * 60 * 60 * 1000; // cria mercados até 7 dias antes do kickoff
 const RESOLVE_GRACE_S = 2 * 60 * 60 + 30 * 60; // kickoff + 2h30 até liberar o resolve
 const CANCEL_AFTER_S = 24 * 60 * 60; // sem resultado 24h após a janela → cancela
 
@@ -173,16 +173,44 @@ async function ensureDemoMarkets() {
   }
 }
 
-/** Cron: garante 1 mercado 1X2 aberto por fixture futura da Copa. */
+/** Com o feed real de volta, mercados demo abertos são cancelados on-chain
+ *  (viram Voided: quem apostou recupera o stake líquido via claim). */
+async function cancelOpenDemoMarkets() {
+  const chain = getChain();
+  if (!chain) return;
+  const s = loadStore();
+  for (const rec of s.markets.filter((m) => m.demo && m.status === "open")) {
+    try {
+      await chain.program.methods
+        .cancelMarket()
+        .accounts({
+          config: configPda(),
+          market: marketPda(new BN(rec.marketId)),
+          authority: chain.authority.publicKey,
+        })
+        .rpc();
+      rec.status = "voided";
+      console.log(`[markets] mercado demo cancelado (feed real ativo): ${rec.home} × ${rec.away}`);
+    } catch (err) {
+      console.warn(`[markets] falha cancelando demo ${rec.marketId}: ${(err as Error).message}`);
+    }
+  }
+  saveStore();
+}
+
+/** Cron: garante 1 mercado 1X2 aberto por fixture futura da Copa (feed real).
+ *  Mercados demo só existem se DEMO_MARKETS=1 e o feed estiver fora. */
 export async function syncMarkets() {
   if (!getChain()) return;
   const s = loadStore();
   const fixtures = await fetchUpcomingFixtures();
 
   if (!fixtures || !fixtures.length) {
-    if (process.env.DEMO_MARKETS !== "0") await ensureDemoMarkets();
+    if (process.env.DEMO_MARKETS === "1") await ensureDemoMarkets();
     return;
   }
+
+  await cancelOpenDemoMarkets();
 
   for (const f of fixtures) {
     if (s.markets.some((m) => m.fixtureId === f.FixtureId && !m.demo)) continue;
@@ -289,14 +317,21 @@ export interface MarketView extends MarketRecord {
   secondsToClose: number;
 }
 
-/** Mercados para o client: metadados + pools on-chain (consenso) + countdown. */
+/** Mercados para o client: só jogos que ainda não começaram (feed em tempo
+ *  real), lock mais próximo primeiro. Mercados demo só com DEMO_MARKETS=1;
+ *  liquidados/anulados não aparecem aqui — resgate fica no Claim Center. */
 export async function listMarkets(): Promise<MarketView[]> {
   const chain = getChain();
   const s = loadStore();
   const now = Math.floor(Date.now() / 1000);
-  const recent = s.markets.filter(
-    (m) => m.status === "open" || now - m.resolveAfterTs < 24 * 60 * 60
-  );
+  const recent = s.markets
+    .filter(
+      (m) =>
+        m.status === "open" &&
+        m.closeTs > now &&
+        (!m.demo || process.env.DEMO_MARKETS === "1")
+    )
+    .sort((a, b) => a.closeTs - b.closeTs);
   if (!chain || !recent.length) {
     return recent.map((m) => ({
       ...m,

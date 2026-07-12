@@ -4,9 +4,16 @@ import * as anchor from "@coral-xyz/anchor";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_2022_PROGRAM_ID,
+  createAssociatedTokenAccountIdempotentInstruction,
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
-import { Connection, PublicKey, SystemProgram } from "@solana/web3.js";
+import {
+  Connection,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+  sendAndConfirmTransaction,
+} from "@solana/web3.js";
 import axios from "axios";
 import nacl from "tweetnacl";
 import {
@@ -108,6 +115,23 @@ export async function subscribeAndActivate(): Promise<TxlineCredentials> {
     ASSOCIATED_TOKEN_PROGRAM_ID
   );
 
+  // O programa exige a token account do TXL já inicializada, mesmo no free
+  // tier (que não cobra TXL) — cria a ATA se ainda não existir.
+  await sendAndConfirmTransaction(
+    connection,
+    new Transaction().add(
+      createAssociatedTokenAccountIdempotentInstruction(
+        keypair.publicKey,
+        userTokenAccount,
+        keypair.publicKey,
+        txlTokenMint,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      )
+    ),
+    [keypair]
+  );
+
   console.log(
     `[txline] assinando on-chain (${NETWORK}, service level ${SERVICE_LEVEL_ID}, ${DURATION_WEEKS} semanas)...`
   );
@@ -157,8 +181,22 @@ export async function subscribeAndActivate(): Promise<TxlineCredentials> {
   return creds;
 }
 
+// A ativação envolve airdrop + transação on-chain + chamadas à API; quando
+// falha (faucet seco, API fora), não adianta re-tentar a cada cache-miss dos
+// consumidores (gameService a cada 5min, crons a cada 60s) — segura 15min.
+let activationFailedAt = 0;
+const ACTIVATION_RETRY_MS = 15 * 60 * 1000;
+
 export async function getCredentials(): Promise<TxlineCredentials> {
   const cached = loadCachedCredentials();
   if (cached) return cached;
-  return subscribeAndActivate();
+  if (Date.now() - activationFailedAt < ACTIVATION_RETRY_MS) {
+    throw new Error("ativação TxLINE em cooldown após falha recente");
+  }
+  try {
+    return await subscribeAndActivate();
+  } catch (err) {
+    activationFailedAt = Date.now();
+    throw err;
+  }
 }
