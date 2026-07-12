@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import { useLang } from "./i18n";
-import { useWallet } from "./chain/wallet";
-import { claimTicket, formatSol } from "./chain/oddies";
+import { LoginPanel, useAccount, useAccountCta } from "./chain/account";
+import { formatSol } from "./chain/oddies";
 import { celebrateWin } from "./celebration";
 import { playSfx } from "./sfx";
 
@@ -26,7 +26,8 @@ type LoadState = "idle" | "loading" | "ready" | "error";
 
 export default function WalletPage() {
   const { t } = useLang();
-  const wallet = useWallet();
+  const account = useAccount();
+  const accountCta = useAccountCta();
   const [tickets, setTickets] = useState<TicketView[]>([]);
   const [state, setState] = useState<LoadState>("idle");
   const [error, setError] = useState("");
@@ -38,11 +39,11 @@ export default function WalletPage() {
   }, [t]);
 
   const refresh = useCallback(async () => {
-    if (!wallet.address) return;
+    if (!account.address) return;
     setState("loading");
     setError("");
     try {
-      const res = await fetch(`/api/tickets/${wallet.address}`);
+      const res = await fetch(`/api/tickets/${account.address}`);
       if (res.status === 503) throw new Error(t.walletPage.onchainOff);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -52,22 +53,17 @@ export default function WalletPage() {
       setError(String((e as Error).message ?? e));
       setState("error");
     }
-  }, [wallet.address, t]);
+  }, [account.address, t]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
   async function onClaim(ticket: TicketView) {
-    if (!wallet.provider) return;
+    if (!account.address) return;
     setClaiming(ticket.ticketMint);
     try {
-      await claimTicket(
-        wallet.provider,
-        ticket.market,
-        ticket.ticketMint,
-        ticket.ticketAccount
-      );
+      await account.claim(ticket.market, ticket.ticketMint, ticket.ticketAccount);
       setClaimedNow((s) => new Set(s).add(ticket.ticketMint));
       celebrateWin();
       playSfx("win");
@@ -95,14 +91,10 @@ export default function WalletPage() {
           { label: t.nav.wallet, href: "#/carteira", active: true },
         ]}
         cta={
-          wallet.address
-            ? { label: t.walletPage.disconnect, onClick: () => wallet.disconnect() }
-            : {
-                label: wallet.connecting
-                  ? t.walletPage.connecting
-                  : t.walletPage.connect,
-                onClick: () => wallet.connect(),
-              }
+          accountCta ?? {
+            label: account.busy ? t.walletPage.connecting : t.walletPage.connect,
+            onClick: () => account.connectWallet(),
+          }
         }
       />
 
@@ -110,25 +102,22 @@ export default function WalletPage() {
         <header className="game-hero">
           <h1 className="game-question">{t.walletPage.title}</h1>
           <p className="game-sub">{t.walletPage.sub}</p>
-          {wallet.address && (
+          {account.address && (
             <span className="badge mono">
-              {wallet.walletName} · {wallet.address.slice(0, 4)}…{wallet.address.slice(-4)}
+              {account.displayName} · {account.address.slice(0, 4)}…{account.address.slice(-4)}
             </span>
+          )}
+          {account.mode === "custodial" && (
+            <p className="dim custodial-info mono">
+              {t.auth.custodialBalance(formatSol(account.custodialBalance ?? 0))} ·{" "}
+              {t.auth.custodialFund(account.address ?? "")}
+            </p>
           )}
         </header>
 
-        {wallet.unavailable && <p className="dim center">{t.walletPage.noWallet}</p>}
+        {!account.address && <LoginPanel note={t.walletPage.connectFirst} />}
 
-        {!wallet.address && !wallet.unavailable && (
-          <div className="endgame">
-            <p>{t.walletPage.connectFirst}</p>
-            <button className="primary" onClick={() => wallet.connect()}>
-              {wallet.connecting ? t.walletPage.connecting : t.walletPage.connect}
-            </button>
-          </div>
-        )}
-
-        {wallet.address && (
+        {account.address && (
           <>
             {state === "loading" && <p className="dim center">{t.walletPage.loading}</p>}
             {state === "error" && (

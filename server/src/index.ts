@@ -17,6 +17,15 @@ import {
   settleRuns,
 } from "./chain/runs.js";
 import { listTickets } from "./chain/tickets.js";
+import {
+  loginAsGuest,
+  loginWithGoogle,
+  logout,
+  sessionUser,
+  userAddress,
+  userKeypair,
+} from "./auth.js";
+import { custodialClaim, custodialPlaceBet } from "./chain/custodial.js";
 
 const app = express();
 app.use(cors());
@@ -56,6 +65,96 @@ app.get("/api/game/matches", async (_req, res) => {
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Login social (Google) e convidado — contas com wallet custodial de devnet
+// ---------------------------------------------------------------------------
+
+app.get("/api/auth/config", (_req, res) => {
+  res.json({
+    googleEnabled: Boolean(process.env.GOOGLE_CLIENT_ID),
+    guestEnabled: process.env.ALLOW_GUEST !== "0",
+  });
+});
+
+app.post("/api/auth/google", async (req, res) => {
+  try {
+    const credential = req.body?.credential;
+    if (typeof credential !== "string" || !credential) {
+      return res.status(400).json({ error: "credential (ID token do Google) obrigatório" });
+    }
+    res.json(await loginWithGoogle(credential));
+  } catch (err: any) {
+    res.status(err.status ?? 500).json({ error: err.message });
+  }
+});
+
+app.post("/api/auth/guest", async (_req, res) => {
+  try {
+    res.json(await loginAsGuest());
+  } catch (err: any) {
+    res.status(err.status ?? 500).json({ error: err.message });
+  }
+});
+
+app.get("/api/auth/me", async (req, res) => {
+  const user = sessionUser(req);
+  if (!user) return res.status(401).json({ error: "sessão inválida" });
+  let balance: number | null = null;
+  const chain = getChain();
+  if (chain) {
+    try {
+      balance = await chain.connection.getBalance(userKeypair(user).publicKey);
+    } catch {
+      /* RPC fora: devolve sem saldo */
+    }
+  }
+  res.json({
+    address: userAddress(user),
+    provider: user.provider,
+    name: user.name ?? null,
+    email: user.email ?? null,
+    balance,
+  });
+});
+
+app.post("/api/auth/logout", (req, res) => {
+  logout(req);
+  res.json({ ok: true });
+});
+
+// Apostas assinadas pelo server com a wallet custodial da sessão
+app.post("/api/custodial/place-bet", async (req, res) => {
+  if (!requireChain(res)) return;
+  const user = sessionUser(req);
+  if (!user) return res.status(401).json({ error: "faça login primeiro" });
+  try {
+    const { marketId, outcome, lamports } = req.body ?? {};
+    if (typeof marketId !== "string" || !Number.isInteger(outcome) || !Number.isInteger(lamports) || lamports <= 0) {
+      return res.status(400).json({ error: "marketId, outcome e lamports (inteiro > 0) obrigatórios" });
+    }
+    res.json(await custodialPlaceBet(userKeypair(user), marketId, outcome, lamports));
+  } catch (err) {
+    res.status(400).json({ error: (err as Error).message });
+  }
+});
+
+app.post("/api/custodial/claim", async (req, res) => {
+  if (!requireChain(res)) return;
+  const user = sessionUser(req);
+  if (!user) return res.status(401).json({ error: "faça login primeiro" });
+  try {
+    const { market, ticketMint, ticketAccount } = req.body ?? {};
+    if (![market, ticketMint, ticketAccount].every((v) => typeof v === "string" && v)) {
+      return res.status(400).json({ error: "market, ticketMint e ticketAccount obrigatórios" });
+    }
+    res.json({
+      signature: await custodialClaim(userKeypair(user), market, ticketMint, ticketAccount),
+    });
+  } catch (err) {
+    res.status(400).json({ error: (err as Error).message });
   }
 });
 
