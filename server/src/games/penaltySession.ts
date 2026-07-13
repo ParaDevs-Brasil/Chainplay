@@ -1,5 +1,7 @@
 import crypto from "node:crypto";
 import { PublicKey } from "@solana/web3.js";
+import { userAddress, type UserRecord } from "../auth/store.js";
+import { HttpError } from "../http/errors.js";
 import {
   HOUSE_LOSE,
   HOUSE_WIN,
@@ -42,6 +44,8 @@ export type SessionStatus =
 export interface SessionRecord {
   id: string;
   wallet: string;
+  /** dono da sessão de auth que criou — ausente só em sessões pré-migração. */
+  userId?: string;
   marketId: string;
   marketPdaB58: string;
   target: number;
@@ -84,12 +88,22 @@ export function sessionView(s: SessionRecord) {
   };
 }
 
-export async function createSession(wallet: string, target: number, stakeLamports: number) {
+/** Garante que quem mexe na sessão é o dono. Sessões antigas sem `userId`
+ *  caem no fallback por wallet — remover quando não houver mais sessão
+ *  pré-migração ativa no store. */
+export function assertSessionOwner(s: SessionRecord, user: UserRecord) {
+  const owns = s.userId ? s.userId === user.id : s.wallet === userAddress(user);
+  if (!owns) throw new HttpError(403, "essa sessão não pertence a esta conta");
+}
+
+export async function createSession(user: UserRecord, target: number, stakeLamports: number) {
   if (!getChain()) throw new Error("on-chain desativado no server (authority ausente)");
+  // wallet vem da sessão autenticada — ninguém abre sessão em nome de terceiros
+  const wallet = userAddress(user);
   try {
     new PublicKey(wallet);
   } catch {
-    throw new Error("wallet inválida");
+    throw new HttpError(400, "wallet inválida");
   }
   const oddsBps = PENALTY_ODDS_BPS[target];
   if (!oddsBps) {
@@ -119,6 +133,7 @@ export async function createSession(wallet: string, target: number, stakeLamport
   const session: SessionRecord = {
     id: crypto.randomUUID(),
     wallet,
+    userId: user.id,
     marketId: market.marketId,
     marketPdaB58: market.marketPdaB58,
     target,
@@ -168,9 +183,10 @@ function recordShot(s: SessionRecord, correct: boolean) {
 }
 
 /** Serve o próximo pênalti da sessão (verifica o place_bet na primeira vez). */
-export async function nextShot(id: string) {
+export async function nextShot(id: string, user: UserRecord) {
   const s = getSession(id);
-  if (!s) throw new Error("sessão não encontrada");
+  if (!s) throw new HttpError(404, "sessão não encontrada");
+  assertSessionOwner(s, user);
   if (s.status === "awaiting_bet") {
     if (!(await houseBetArrived(s.marketId, s.netLamports))) {
       throw new Error("aposta ainda não confirmada on-chain — assine o place_bet primeiro");
@@ -199,9 +215,10 @@ export async function nextShot(id: string) {
 }
 
 /** Resposta do pênalti em aberto (timeout do evento conta como erro). */
-export function answerShot(id: string, choice: number, name?: string) {
+export function answerShot(id: string, choice: number, user: UserRecord, name?: string) {
   const s = getSession(id);
-  if (!s) throw new Error("sessão não encontrada");
+  if (!s) throw new HttpError(404, "sessão não encontrada");
+  assertSessionOwner(s, user);
   if (s.status !== "playing" || !s.currentEventId) {
     throw new Error("nenhum pênalti em aberto nessa sessão");
   }

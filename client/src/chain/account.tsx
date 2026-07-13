@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { useWallet } from "./wallet";
+import { api } from "./http";
 import { claimTicket, placeBet as walletPlaceBet, type PlacedBet } from "./oddies";
 import { useLang } from "../i18n";
 
@@ -35,6 +36,8 @@ interface AuthConfig {
 interface AccountCtx {
   /** endereço ativo (wallet conectada tem prioridade sobre sessão social) */
   address: string | null;
+  /** Bearer da sessão de backend — exigido pelas rotas de jogo (runs/penalty/survivor) */
+  token: string | null;
   mode: "wallet" | "custodial" | null;
   displayName: string | null;
   busy: boolean;
@@ -53,20 +56,6 @@ interface AccountCtx {
 }
 
 const Ctx = createContext<AccountCtx | null>(null);
-
-async function api(path: string, body?: unknown, token?: string) {
-  const res = await fetch(path, {
-    method: body !== undefined ? "POST" : "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
-  return json;
-}
 
 export function AccountProvider({ children }: { children: ReactNode }) {
   const wallet = useWallet();
@@ -154,8 +143,9 @@ export function AccountProvider({ children }: { children: ReactNode }) {
           signature: btoa(String.fromCharCode(...signature)),
         });
         if (!cancelled) adoptSession(info);
-      } catch {
+      } catch (e) {
         // recusa do usuário ou API sem suporte — segue sem sessão de backend
+        console.warn("[account] SIWS automático não completou:", e);
       }
     })();
     return () => {
@@ -170,6 +160,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     try {
       adoptSession(await api("/api/auth/google", { credential }));
     } catch (e) {
+      console.error("[account] login Google falhou:", e);
       setError(String((e as Error).message));
     } finally {
       setBusy(false);
@@ -182,6 +173,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     try {
       adoptSession(await api("/api/auth/guest", {}));
     } catch (e) {
+      console.error("[account] login convidado falhou:", e);
       setError(String((e as Error).message));
     } finally {
       setBusy(false);
@@ -243,6 +235,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     <Ctx.Provider
       value={{
         address,
+        token: session?.token ?? null,
         mode,
         displayName:
           mode === "wallet"

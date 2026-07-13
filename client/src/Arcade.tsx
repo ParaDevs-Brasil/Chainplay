@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Navbar from "./Navbar";
 import { useLang } from "./i18n";
 import { LoginPanel, useAccount, useAccountCta } from "./chain/account";
+import { api } from "./chain/http";
 import { formatSol, type PlacedBet } from "./chain/oddies";
 import HowTo from "./components/HowTo";
 import Leaderboard from "./components/Leaderboard";
@@ -280,17 +281,6 @@ type SPhase =
 
 const SESSION_STAKES = [0.01, 0.02, 0.05];
 
-async function api(path: string, body?: unknown) {
-  const res = await fetch(path, {
-    method: body ? "POST" : "GET",
-    headers: { "Content-Type": "application/json" },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
-  return json;
-}
-
 function StakedPenalty() {
   const { t } = useLang();
   const account = useAccount();
@@ -321,9 +311,9 @@ function StakedPenalty() {
 
   // retoma sessão ativa (o server é a fonte de verdade)
   useEffect(() => {
-    if (!account.address) return;
+    if (!account.address || !account.token) return;
     let cancelled = false;
-    api(`/api/arcade/penalty/sessions/${account.address}`)
+    api(`/api/arcade/penalty/sessions/${account.address}`, undefined, account.token)
       .then(({ sessions }: { sessions: SessionState[] }) => {
         if (cancelled || !sessions?.length) return;
         const nowS = Math.floor(Date.now() / 1000);
@@ -336,12 +326,12 @@ function StakedPenalty() {
         setSession(active);
         setPhase(active.status === "playing" ? "playing" : "betting");
       })
-      .catch(() => {});
+      .catch((e) => console.warn("[penalty] não retomou sessão ativa:", e));
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account.address]);
+  }, [account.address, account.token]);
 
   // countdown da janela de aposta
   useEffect(() => {
@@ -376,14 +366,19 @@ function StakedPenalty() {
     if (phase !== "won" || !session || settled) return;
     const id = window.setInterval(async () => {
       try {
-        const s = await api(`/api/arcade/penalty/session/${session.id}`);
+        const s = await api(
+          `/api/arcade/penalty/session/${session.id}`,
+          undefined,
+          account.token
+        );
         if (s.status === "settled") setSettled(true);
       } catch {
         /* tenta no próximo tick */
       }
     }, 5000);
     return () => window.clearInterval(id);
-  }, [phase, session, settled]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, session, settled, account.token]);
 
   const stakeLamports = Math.round(stakeSol * 1e9);
   const oddsBps = odds[String(target)] ?? 0;
@@ -396,14 +391,16 @@ function StakedPenalty() {
     setError("");
     setPhase("creating");
     try {
-      const s = await api("/api/arcade/penalty/session", {
-        wallet: account.address,
-        target,
-        stakeLamports,
-      });
+      // a wallet da sessão é a da conta autenticada — o server ignora o body
+      const s = await api(
+        "/api/arcade/penalty/session",
+        { target, stakeLamports },
+        account.token
+      );
       setSession(s);
       setPhase("betting");
     } catch (e) {
+      console.error("[penalty] criar sessão falhou:", e);
       setError(String((e as Error).message));
       setPhase("config");
     }
@@ -429,7 +426,11 @@ function StakedPenalty() {
     setError("");
     setOutcome(null);
     try {
-      const r = await api(`/api/arcade/penalty/session/${session.id}/shot`, {});
+      const r = await api(
+        `/api/arcade/penalty/session/${session.id}/shot`,
+        {},
+        account.token
+      );
       setSession(r.session);
       // pênalti abandonado pode ter encerrado a sessão no server
       if (r.session.status === "won") {
@@ -449,6 +450,7 @@ function StakedPenalty() {
       setLeftMs(Math.max(0, total));
       playSfx("click");
     } catch (e) {
+      console.error("[penalty] próximo pênalti falhou:", e);
       setError(String((e as Error).message));
     }
   }
@@ -457,10 +459,11 @@ function StakedPenalty() {
     if (!session || !event || outcome) return;
     window.clearInterval(timer.current);
     try {
-      const r = await api(`/api/arcade/penalty/session/${session.id}/answer`, {
-        choice,
-        name: account.displayName ?? undefined,
-      });
+      const r = await api(
+        `/api/arcade/penalty/session/${session.id}/answer`,
+        { choice, name: account.displayName ?? undefined },
+        account.token
+      );
       setOutcome(r);
       setSession(r.session);
       setEvent(null);

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import { useLang } from "./i18n";
 import { LoginPanel, useAccount, useAccountCta } from "./chain/account";
+import { api } from "./chain/http";
 import { formatSol } from "./chain/oddies";
 import HowTo from "./components/HowTo";
 import { celebrateCorrect } from "./celebration";
@@ -72,20 +73,19 @@ export default function Survivor() {
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch("/api/survivor/markets");
-      if (!res.ok) throw new Error(t.markets.serverOffline);
-      setMarkets((await res.json()).markets ?? []);
-      setBoard(await (await fetch("/api/survivor/leaderboard")).json());
+      setMarkets((await api("/api/survivor/markets")).markets ?? []);
+      setBoard(await api("/api/survivor/leaderboard"));
       if (account.address) {
-        setStatus(await (await fetch(`/api/survivor/status/${account.address}`)).json());
+        setStatus(await api(`/api/survivor/status/${account.address}`));
       }
       setError("");
     } catch (e) {
+      console.error("[survivor] refresh falhou:", e);
       setError(String((e as Error).message));
     } finally {
       setLoading(false);
     }
-  }, [t, account.address]);
+  }, [account.address]);
 
   useEffect(() => {
     refresh();
@@ -104,23 +104,21 @@ export default function Survivor() {
     try {
       // 1) aposta real no mercado 1X2 (ticket-NFT na carteira)
       await account.placeBet(m.marketId, outcome, Math.round(stakeSol * 1e9));
-      // 2) registra o pick da temporada
-      const res = await fetch("/api/survivor/pick", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          wallet: account.address,
+      // 2) registra o pick da temporada — a wallet vem da sessão autenticada
+      await api(
+        "/api/survivor/pick",
+        {
           name: account.displayName ?? undefined,
           marketId: m.marketId,
           outcome,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+        },
+        account.token
+      );
       celebrateCorrect(3);
       playSfx("correct");
       refresh();
     } catch (e) {
+      console.error("[survivor] pick falhou:", e);
       setError(String((e as Error).message));
     } finally {
       setPicking(null);

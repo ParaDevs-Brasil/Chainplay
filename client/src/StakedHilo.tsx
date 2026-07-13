@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Navbar from "./Navbar";
 import { useLang } from "./i18n";
 import { LoginPanel, useAccount, useAccountCta } from "./chain/account";
+import { api } from "./chain/http";
 import { formatSol, type PlacedBet } from "./chain/oddies";
 import HowTo from "./components/HowTo";
 import { ResultBanner, RollingValue, type Guess } from "./components/MatchCard";
@@ -60,17 +61,6 @@ const STAKE_PRESETS = [0.01, 0.02, 0.05];
 const INFINITE_STAKE_PRESETS = [0.002, 0.005, 0.01];
 const ROLL_DURATION = 1000;
 
-async function api(path: string, body?: unknown) {
-  const res = await fetch(path, {
-    method: body ? "POST" : "GET",
-    headers: { "Content-Type": "application/json" },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
-  return json;
-}
-
 export default function StakedHilo({ mode = "target" }: { mode?: RunMode }) {
   const { t } = useLang();
   const account = useAccount();
@@ -126,9 +116,9 @@ export default function StakedHilo({ mode = "target" }: { mode?: RunMode }) {
   // verdade): awaiting_bet com janela aberta volta pra assinatura; playing
   // volta direto pro jogo.
   useEffect(() => {
-    if (!account.address) return;
+    if (!account.address || !account.token) return;
     let cancelled = false;
-    api(`/api/runs/wallet/${account.address}`)
+    api(`/api/runs/wallet/${account.address}`, undefined, account.token)
       .then(({ runs }: { runs: RunState[] }) => {
         if (cancelled || !runs?.length) return;
         const nowS = Math.floor(Date.now() / 1000);
@@ -142,12 +132,12 @@ export default function StakedHilo({ mode = "target" }: { mode?: RunMode }) {
         setRun(active);
         setPhase(active.status === "playing" ? "playing" : "betting");
       })
-      .catch(() => {});
+      .catch((e) => console.warn("[hilo] não retomou run ativa:", e));
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account.address]);
+  }, [account.address, account.token]);
 
   // countdown da janela de aposta
   useEffect(() => {
@@ -166,14 +156,15 @@ export default function StakedHilo({ mode = "target" }: { mode?: RunMode }) {
     if (phase !== "won" || !run || settled) return;
     const id = window.setInterval(async () => {
       try {
-        const s = await api(`/api/runs/${run.id}`);
+        const s = await api(`/api/runs/${run.id}`, undefined, account.token);
         if (s.status === "settled") setSettled(true);
       } catch {
         /* tenta de novo no próximo tick */
       }
     }, 5000);
     return () => window.clearInterval(id);
-  }, [phase, run, settled]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, run, settled, account.token]);
 
   const capBps = ladder[String(ladderCap)] ?? 0;
   const oddsBps = infinite ? capBps : oddsTable[String(target)] ?? 0;
@@ -189,15 +180,12 @@ export default function StakedHilo({ mode = "target" }: { mode?: RunMode }) {
     setError("");
     setPhase("creating");
     try {
-      const r = await api("/api/runs", {
-        wallet: account.address,
-        target,
-        stakeLamports,
-        mode,
-      });
+      // a wallet da run é a da sessão autenticada — o server ignora o body
+      const r = await api("/api/runs", { target, stakeLamports, mode }, account.token);
       setRun(r);
       setPhase("betting");
     } catch (e) {
+      console.error("[hilo] criar run falhou:", e);
       setError(String((e as Error).message));
       setPhase("config");
     }
@@ -213,6 +201,7 @@ export default function StakedHilo({ mode = "target" }: { mode?: RunMode }) {
       playSfx("click");
       setPhase("playing");
     } catch (e) {
+      console.error("[hilo] assinatura da aposta falhou:", e);
       setError(String((e as Error).message));
       setPhase("betting");
     }
@@ -225,7 +214,7 @@ export default function StakedHilo({ mode = "target" }: { mode?: RunMode }) {
     const prevValue = run.current?.value ?? 0;
     setLastGuess(dir);
     try {
-      const r = await api(`/api/runs/${run.id}/guess`, { dir });
+      const r = await api(`/api/runs/${run.id}/guess`, { dir }, account.token);
       const apply = () => {
         setLastReveal({
           card: r.revealed,
@@ -259,6 +248,7 @@ export default function StakedHilo({ mode = "target" }: { mode?: RunMode }) {
         revealTimer.current = window.setTimeout(apply, ROLL_DURATION);
       }
     } catch (e) {
+      console.error("[hilo] guess falhou:", e);
       setError(String((e as Error).message));
     }
   }
@@ -266,7 +256,7 @@ export default function StakedHilo({ mode = "target" }: { mode?: RunMode }) {
   async function forfeit() {
     if (!run) return;
     try {
-      const r = await api(`/api/runs/${run.id}/cashout`, {});
+      const r = await api(`/api/runs/${run.id}/cashout`, {}, account.token);
       if (r.status === "cashed") {
         // infinite: saque na escada — mercado anulado, prêmio garantido
         setRun((old) => ({ ...(old as RunState), ...r }));
@@ -278,6 +268,7 @@ export default function StakedHilo({ mode = "target" }: { mode?: RunMode }) {
         playSfx("wrong");
       }
     } catch (e) {
+      console.error("[hilo] cashout falhou:", e);
       setError(String((e as Error).message));
     }
   }
@@ -292,6 +283,7 @@ export default function StakedHilo({ mode = "target" }: { mode?: RunMode }) {
       celebrateWin();
       playSfx("win");
     } catch (e) {
+      console.error("[hilo] claim falhou:", e);
       setError(String((e as Error).message));
     } finally {
       setClaiming(false);

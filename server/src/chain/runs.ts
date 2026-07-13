@@ -9,8 +9,10 @@ import {
   Transaction,
   sendAndConfirmTransaction,
 } from "@solana/web3.js";
+import { userAddress, type UserRecord } from "../auth/store.js";
 import { DATA_DIR } from "../config.js";
 import { getGameData, type GameMatch } from "../games/matches.js";
+import { HttpError } from "../http/errors.js";
 import {
   BPS,
   configPda,
@@ -85,6 +87,9 @@ export type RunStatus =
 export interface RunRecord {
   id: string;
   wallet: string;
+  /** dono da sessão que criou a run — ausente só em runs persistidas antes da
+   *  migração de auth; nesse caso o fallback compara pela wallet. */
+  userId?: string;
   marketId: string;
   marketPdaB58: string;
   /** ausente em runs antigas = "target" */
@@ -213,8 +218,18 @@ export function runView(run: RunRecord) {
 const MAX_RUNS_PER_WINDOW = 10;
 const RUN_WINDOW_MS = 5 * 60 * 1000;
 
+/** Garante que quem chama guess/cashout/consulta é o dono da run. Runs antigas
+ *  sem `userId` caem no fallback por wallet — remover o fallback quando o store
+ *  não tiver mais nenhuma run pré-migração ativa. */
+export function assertRunOwner(run: RunRecord, user: UserRecord) {
+  const owns = run.userId
+    ? run.userId === user.id
+    : run.wallet === userAddress(user);
+  if (!owns) throw new HttpError(403, "essa run não pertence a esta conta");
+}
+
 export async function createRun(
-  wallet: string,
+  user: UserRecord,
   target: number,
   stakeLamports: number,
   mode: RunMode = "target"
@@ -222,10 +237,12 @@ export async function createRun(
   const chain = getChain();
   if (!chain) throw new Error("on-chain desativado no server (authority ausente)");
 
+  // wallet vem da sessão autenticada — ninguém cria run "em nome" de terceiros
+  const wallet = userAddress(user);
   try {
     new PublicKey(wallet);
   } catch {
-    throw new Error("wallet inválida");
+    throw new HttpError(400, "wallet inválida");
   }
   const s = loadStore();
   // Bloqueia só runs que ainda podem andar: playing, ou awaiting_bet com a
@@ -240,11 +257,11 @@ export async function createRun(
           (r.status === "awaiting_bet" && nowS <= r.closeTs))
     )
   ) {
-    throw new Error("você já tem uma run ativa — termine-a antes de abrir outra");
+    throw new HttpError(409, "você já tem uma run ativa — termine-a antes de abrir outra");
   }
   const recentRuns = s.runs.filter((r) => Date.now() - r.createdAt < RUN_WINDOW_MS);
   if (recentRuns.length >= MAX_RUNS_PER_WINDOW) {
-    throw new Error("limite de novas runs atingido — tente de novo em alguns minutos");
+    throw new HttpError(429, "limite de novas runs atingido — tente de novo em alguns minutos");
   }
 
   // infinite: a meta é o topo da escada e as odds on-chain são as do topo —
@@ -316,6 +333,7 @@ export async function createRun(
   const run: RunRecord = {
     id: crypto.randomUUID(),
     wallet,
+    userId: user.id,
     marketId: marketId.toString(),
     marketPdaB58: market.toBase58(),
     mode,
@@ -359,9 +377,10 @@ async function ensureBetPlaced(run: RunRecord) {
   saveStore();
 }
 
-export async function guessRun(id: string, dir: "higher" | "lower") {
+export async function guessRun(id: string, dir: "higher" | "lower", user: UserRecord) {
   const run = getRun(id);
-  if (!run) throw new Error("run não encontrada");
+  if (!run) throw new HttpError(404, "run não encontrada");
+  assertRunOwner(run, user);
   if (run.status === "awaiting_bet") await ensureBetPlaced(run);
   if (run.status !== "playing") throw new Error(`run encerrada (${run.status})`);
 
@@ -407,9 +426,10 @@ export async function guessRun(id: string, dir: "higher" | "lower") {
  *   `net*(m-1)` direto pra wallet. Bater o topo não passa por aqui: vira
  *   `won` no guess e liquida com as odds cheias do mercado.
  */
-export async function cashoutRun(id: string) {
+export async function cashoutRun(id: string, user: UserRecord) {
   const run = getRun(id);
-  if (!run) throw new Error("run não encontrada");
+  if (!run) throw new HttpError(404, "run não encontrada");
+  assertRunOwner(run, user);
   if (run.status !== "playing" && run.status !== "awaiting_bet") {
     throw new Error(`run encerrada (${run.status})`);
   }

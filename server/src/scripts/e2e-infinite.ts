@@ -23,10 +23,16 @@ import {
 
 const API = process.env.API_URL || "http://localhost:3001";
 
+// rotas de runs agora exigem sessão — o E2E entra como convidado
+let TOKEN = "";
+
 async function api(path: string, body?: unknown) {
   const res = await fetch(`${API}${path}`, {
     method: body ? "POST" : "GET",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}),
+    },
     body: body ? JSON.stringify(body) : undefined,
   });
   const json = await res.json();
@@ -40,7 +46,7 @@ async function playOneRun(attempt: number): Promise<boolean> {
   const stake = 1_000_000;
 
   const run = await api("/api/runs", {
-    wallet: bettor.publicKey.toBase58(),
+    target: 1, // ignorado no mode infinite (meta = topo da escada)
     stakeLamports: stake,
     mode: "infinite",
   });
@@ -130,6 +136,7 @@ async function playOneRun(attempt: number): Promise<boolean> {
 
 async function main() {
   if (!getChain()) throw new Error("authority keypair ausente");
+  TOKEN = (await api("/api/auth/guest", {})).token;
   for (let i = 1; i <= 5; i++) {
     if (await playOneRun(i)) {
       console.log("E2E infinite: PASSOU ✅");

@@ -20,10 +20,16 @@ import {
 
 const API = process.env.API_URL || "http://localhost:3001";
 
+// rotas da sessão de penalty agora exigem sessão de auth — E2E entra como convidado
+let TOKEN = "";
+
 async function api(path: string, body?: unknown) {
   const res = await fetch(`${API}${path}`, {
     method: body ? "POST" : "GET",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}),
+    },
     body: body ? JSON.stringify(body) : undefined,
   });
   const json = await res.json();
@@ -38,7 +44,6 @@ async function playSession(attempt: number): Promise<boolean> {
   const bettor = chain.authority;
 
   const session = await api("/api/arcade/penalty/session", {
-    wallet: bettor.publicKey.toBase58(),
     target: 6,
     stakeLamports: 1_000_000,
   });
@@ -117,6 +122,7 @@ async function playSession(attempt: number): Promise<boolean> {
 
 async function main() {
   if (!getChain()) throw new Error("authority keypair ausente");
+  TOKEN = (await api("/api/auth/guest", {})).token;
   for (let i = 1; i <= 4; i++) {
     if (await playSession(i)) {
       console.log("E2E penalty session: PASSOU ✅");

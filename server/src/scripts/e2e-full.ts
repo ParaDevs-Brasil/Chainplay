@@ -43,10 +43,17 @@ function check(name: string, ok: boolean, detail = "") {
   }
 }
 
-async function api(path: string, body?: unknown): Promise<{ status: number; json: any }> {
+async function api(
+  path: string,
+  body?: unknown,
+  token?: string
+): Promise<{ status: number; json: any }> {
   const res = await fetch(`${API}${path}`, {
     method: body ? "POST" : "GET",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: body ? JSON.stringify(body) : undefined,
   });
   return { status: res.status, json: await res.json().catch(() => ({})) };
@@ -95,37 +102,43 @@ async function main() {
   if (!chain) throw new Error("authority keypair ausente");
   const me = chain.authority.publicKey.toBase58();
 
+  // as rotas de runs exigem sessão: uma "vítima" (dona da run) e um "atacante"
+  const victim = (await api("/api/auth/guest", {})).json;
+  const attacker = (await api("/api/auth/guest", {})).json;
+  const TOKEN: string = victim.token;
+  if (!TOKEN || !attacker.token) throw new Error("login de convidado falhou");
+
   // -------------------------------------------------------------------------
   console.log("\nA. validações e abusos da API");
   // -------------------------------------------------------------------------
   {
     let r = await api("/api/runs", { target: 3, stakeLamports: 1_000_000 });
-    check("run sem wallet → 400", r.status === 400);
+    check("run sem sessão → 401", r.status === 401);
 
-    r = await api("/api/runs", { wallet: me, target: 4, stakeLamports: 1_000_000 });
+    r = await api("/api/runs", { target: 4, stakeLamports: 1_000_000 }, TOKEN);
     check("meta inválida (4) → 400", r.status === 400);
 
-    r = await api("/api/runs", { wallet: me, target: 3, stakeLamports: 10 });
+    r = await api("/api/runs", { target: 3, stakeLamports: 10 }, TOKEN);
     check("stake abaixo do mínimo → 400", r.status === 400);
 
-    r = await api("/api/runs", { wallet: me, target: 20, stakeLamports: 500_000_000 });
+    r = await api("/api/runs", { target: 20, stakeLamports: 500_000_000 }, TOKEN);
     check("payout acima do teto da casa → 400", r.status === 400);
 
-    r = await api("/api/runs", { wallet: me, target: 3, stakeLamports: 1_000_000.5 });
+    r = await api("/api/runs", { target: 3, stakeLamports: 1_000_000.5 }, TOKEN);
     check("stake não-inteiro → 400", r.status === 400);
 
-    r = await api("/api/runs/nao-existe/guess", { dir: "higher" });
-    check("guess em run inexistente → 400", r.status === 400);
+    r = await api("/api/runs/nao-existe/guess", { dir: "higher" }, TOKEN);
+    check("guess em run inexistente → 404", r.status === 404);
 
-    r = await api("/api/runs/nao-existe");
+    r = await api("/api/runs/nao-existe", undefined, TOKEN);
     check("GET run inexistente → 404", r.status === 404);
   }
 
   // -------------------------------------------------------------------------
-  console.log("\nB. segurança: sem vazamento da sequência secreta");
+  console.log("\nB. segurança: sem vazamento da sequência secreta + sem IDOR");
   // -------------------------------------------------------------------------
   const run = (
-    await api("/api/runs", { wallet: me, target: 3, stakeLamports: 1_000_000 })
+    await api("/api/runs", { target: 3, stakeLamports: 1_000_000 }, TOKEN)
   ).json;
   {
     const body = JSON.stringify(run);
@@ -136,20 +149,36 @@ async function main() {
       JSON.stringify(run.next)
     );
 
-    const view = (await api(`/api/runs/${run.id}`)).json;
+    const view = (await api(`/api/runs/${run.id}`, undefined, TOKEN)).json;
     check(
       "GET /runs/:id não expõe 'rounds' nem valor futuro",
       !JSON.stringify(view).includes('"rounds"') && view.next?.value === undefined
     );
 
-    const g = await api(`/api/runs/${run.id}/guess`, { dir: "sideways" });
+    const g = await api(`/api/runs/${run.id}/guess`, { dir: "sideways" }, TOKEN);
     check("dir inválida → 400", g.status === 400);
 
-    const g2 = await api(`/api/runs/${run.id}/guess`, { dir: "higher" });
+    const g2 = await api(`/api/runs/${run.id}/guess`, { dir: "higher" }, TOKEN);
     check(
       "guess sem aposta on-chain → bloqueado",
       g2.status === 400 && /não confirmada/.test(g2.json.error ?? "")
     );
+
+    // regressão dos achados #5/#6 (IDOR): terceiro autenticado não lê nem joga
+    let r = await api(`/api/runs/wallet/${victim.address}`);
+    check("listar runs de outra wallet sem sessão → 401", r.status === 401);
+
+    r = await api(`/api/runs/wallet/${victim.address}`, undefined, attacker.token);
+    check("listar runs de outra wallet → 403", r.status === 403);
+
+    r = await api(`/api/runs/${run.id}`, undefined, attacker.token);
+    check("GET run de outra conta → 403", r.status === 403);
+
+    r = await api(`/api/runs/${run.id}/guess`, { dir: "higher" }, attacker.token);
+    check("guess na run de outra conta → 403", r.status === 403);
+
+    r = await api(`/api/runs/${run.id}/cashout`, {}, attacker.token);
+    check("cashout na run de outra conta → 403", r.status === 403);
   }
 
   // -------------------------------------------------------------------------
@@ -170,7 +199,7 @@ async function main() {
     while (state.status === "playing" || state.status === "awaiting_bet") {
       const dir =
         rounds[idx + 1].value >= rounds[idx].value ? "higher" : "lower";
-      const r = await api(`/api/runs/${run.id}/guess`, { dir });
+      const r = await api(`/api/runs/${run.id}/guess`, { dir }, TOKEN);
       if (r.status !== 200) throw new Error(`guess falhou: ${r.json.error}`);
       state = r.json;
       check(
@@ -182,7 +211,7 @@ async function main() {
     }
     check("run terminou vencedora", state.status === "won", state.status);
 
-    const after = await api(`/api/runs/${run.id}/guess`, { dir: "higher" });
+    const after = await api(`/api/runs/${run.id}/guess`, { dir: "higher" }, TOKEN);
     check("guess após o fim → bloqueado", after.status === 400);
 
     // espera o cron liquidar on-chain
@@ -190,7 +219,7 @@ async function main() {
     let settled = false;
     for (let i = 0; i < 40; i++) {
       await sleep(10_000);
-      const s = (await api(`/api/runs/${run.id}`)).json;
+      const s = (await api(`/api/runs/${run.id}`, undefined, TOKEN)).json;
       process.stdout.write(".");
       if (s.status === "settled") {
         settled = true;

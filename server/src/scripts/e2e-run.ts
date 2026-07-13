@@ -22,10 +22,16 @@ import {
 
 const API = process.env.API_URL || "http://localhost:3001";
 
+// rotas de runs agora exigem sessão — o E2E entra como convidado
+let TOKEN = "";
+
 async function api(path: string, body?: unknown) {
   const res = await fetch(`${API}${path}`, {
     method: body ? "POST" : "GET",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}),
+    },
     body: body ? JSON.stringify(body) : undefined,
   });
   const json = await res.json();
@@ -42,9 +48,14 @@ async function main() {
   console.log(`bettor: ${bettor.publicKey.toBase58()}`);
   const startBalance = await chain.connection.getBalance(bettor.publicKey);
 
+  // 0. sessão de convidado (a wallet da run é a da sessão; o place_bet
+  //    on-chain pode ser assinado por qualquer wallet — aqui, a authority)
+  const guest = await api("/api/auth/guest", {});
+  TOKEN = guest.token;
+  console.log(`sessão convidado: ${guest.address}`);
+
   // 1. cria a run
   const run = await api("/api/runs", {
-    wallet: bettor.publicKey.toBase58(),
     target: 3,
     stakeLamports: 1_000_000,
   });
