@@ -2522,14 +2522,17 @@ button.lo:hover:not(:disabled) {
 /* mascote camaleão apoiado na borda direita do card */
 /* mascote sobreposto: maior que o card e centrado verticalmente na sua
    metade direita — a cabeça sobe acima do topo e a cauda desce abaixo,
-   ficando por cima (z-index). */
+   ficando por cima (z-index).
+   A largura é percentual do .hero-figure (que tem o tamanho do card), então
+   o mascote acompanha o card na mesma proporção em qualquer tela — a posição
+   relativa nunca "desliza". */
 .hero-character {
   position: absolute;
   z-index: 2;
   left: 38%;
   top: 20%;
   transform: translateY(-50%);
-  width: clamp(20px, 35vw, 600px);
+  width: 135%;
   height: auto;
   filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.45));
 }
