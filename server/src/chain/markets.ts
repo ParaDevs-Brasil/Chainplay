@@ -12,7 +12,15 @@ import {
   type Fixture,
 } from "../txline/data.js";
 import { generateMockMatches } from "../games/mock.js";
-import { getChain, configPda, marketPda, vaultPda, marketStateLabel } from "./client.js";
+import {
+  GAME,
+  configPda,
+  gameIdOrNone,
+  getChain,
+  marketPda,
+  marketStateLabel,
+  vaultPda,
+} from "./client.js";
 
 const STORE_PATH = path.join(DATA_DIR, "markets.json");
 
@@ -82,7 +90,9 @@ async function createParimutuelMarket(rec: Omit<MarketRecord, "pda" | "status" |
       3,
       zeroOdds(),
       new BN(rec.closeTs),
-      new BN(rec.resolveAfterTs)
+      new BN(rec.resolveAfterTs),
+      // mercados 1X2 = "Guess the Team" (palpite no vencedor da partida)
+      await gameIdOrNone(chain.program, GAME.team)
     )
     .accounts({
       config: configPda(),

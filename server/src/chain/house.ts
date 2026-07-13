@@ -1,7 +1,15 @@
 import crypto from "node:crypto";
 import { BN } from "@coral-xyz/anchor";
 import { LAMPORTS_PER_SOL, SystemProgram } from "@solana/web3.js";
-import { BPS, configPda, getChain, marketPda, vaultPda } from "./client.js";
+import {
+  BPS,
+  GAME_NONE,
+  configPda,
+  gameIdOrNone,
+  getChain,
+  marketPda,
+  vaultPda,
+} from "./client.js";
 
 /**
  * Ciclo de vida de mercados house-backed por sessão de jogo (Padrão B do
@@ -32,7 +40,8 @@ export interface HouseMarketInfo {
 export async function createHouseMarket(
   oddsBps: number,
   stakeLamports: number,
-  betWindowS: number
+  betWindowS: number,
+  gameId: number = GAME_NONE
 ): Promise<HouseMarketInfo> {
   const chain = getChain();
   if (!chain) throw new Error("on-chain desativado no server (authority ausente)");
@@ -68,7 +77,8 @@ export async function createHouseMarket(
       2,
       odds,
       new BN(closeTs),
-      new BN(resolveAfterTs)
+      new BN(resolveAfterTs),
+      await gameIdOrNone(chain.program, gameId)
     )
     .accounts({
       config: configPda(),

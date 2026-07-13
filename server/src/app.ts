@@ -7,6 +7,7 @@ import { authRoutes } from "./http/routes/auth.routes.js";
 import { custodialRoutes } from "./http/routes/custodial.routes.js";
 import { gameRoutes } from "./http/routes/game.routes.js";
 import { marketsRoutes } from "./http/routes/markets.routes.js";
+import { nftRoutes } from "./http/routes/nft.routes.js";
 import { quizRoutes } from "./http/routes/quiz.routes.js";
 import { runsRoutes } from "./http/routes/runs.routes.js";
 import { statsRoutes } from "./http/routes/stats.routes.js";
@@ -30,6 +31,8 @@ export function createApp(): express.Express {
   app.use("/api/survivor", survivorRoutes);
   app.use("/api/arcade", arcadeRoutes);
   app.use("/api/quiz", quizRoutes);
+  // arte + metadata Metaplex das NFTs de identidade dos jogos
+  app.use("/nft", nftRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

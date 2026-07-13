@@ -7,6 +7,8 @@
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
     "subscribe": "tsx src/scripts/subscribe.ts",
+    "create:collections": "tsx src/scripts/create-collections.ts",
+    "verify:collections": "tsx src/scripts/verify-collections.ts",
     "e2e:run": "tsx src/scripts/e2e-run.ts",
     "e2e:full": "tsx src/scripts/e2e-full.ts"
   },

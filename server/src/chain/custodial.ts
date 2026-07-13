@@ -1,5 +1,6 @@
 import { BN } from "@coral-xyz/anchor";
 import {
+  ComputeBudgetProgram,
   Keypair,
   PublicKey,
   SystemProgram,
@@ -7,6 +8,7 @@ import {
 } from "@solana/web3.js";
 import {
   betPda,
+  collectionAccounts,
   configPda,
   getChain,
   marketPda,
@@ -35,13 +37,22 @@ export async function custodialPlaceBet(
   const chain = getChain();
   if (!chain) throw new Error("on-chain desativado");
   const market = marketPda(new BN(marketIdStr));
-  const config: any = await (chain.program.account as any).config.fetch(configPda());
+  const [config, marketAcc] = await Promise.all([
+    (chain.program.account as any).config.fetch(configPda()),
+    (chain.program.account as any).market.fetch(market),
+  ]);
 
   const ticketMint = Keypair.generate();
   const ticketAccount = Keypair.generate();
+  // contas da coleção-identidade do jogo (o ticket entra na coleção do jogo do mercado)
+  const collection = await collectionAccounts(
+    chain.program,
+    marketAcc.gameId,
+    ticketMint.publicKey
+  );
   const signature = await chain.program.methods
     .placeBet(outcome, new BN(lamports))
-    .accounts({
+    .accountsPartial({
       config: configPda(),
       market,
       vault: vaultPda(market),
@@ -53,7 +64,10 @@ export async function custodialPlaceBet(
       tokenProgram: TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
       rent: SYSVAR_RENT_PUBKEY,
+      ...collection,
     })
+    // metadata + verify na coleção custam CU extra além dos ~200k padrão
+    .preInstructions([ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 })])
     .signers([user, ticketMint, ticketAccount])
     .rpc();
 

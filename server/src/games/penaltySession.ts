@@ -9,7 +9,7 @@ import {
   houseBetArrived,
   settleHouseMarket,
 } from "../chain/house.js";
-import { getChain } from "../chain/client.js";
+import { GAME, getChain } from "../chain/client.js";
 import { JsonFileStore } from "../store/jsonFile.js";
 import { answerEvent, nextEvent } from "./arcade.js";
 
@@ -129,7 +129,7 @@ export async function createSession(user: UserRecord, target: number, stakeLampo
     throw new Error("limite de novas sessões atingido — tente em alguns minutos");
   }
 
-  const market = await createHouseMarket(oddsBps, stakeLamports, BET_WINDOW_S);
+  const market = await createHouseMarket(oddsBps, stakeLamports, BET_WINDOW_S, GAME.penalty);
   const session: SessionRecord = {
     id: crypto.randomUUID(),
     wallet,

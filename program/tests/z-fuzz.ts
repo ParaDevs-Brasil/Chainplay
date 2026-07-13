@@ -100,7 +100,8 @@ describe("oddies-bet :: fuzzing", function () {
         opts.outcomeCount,
         opts.oddsBps ?? zeroOdds(),
         new BN(closeTs),
-        new BN(resolveAfterTs)
+        new BN(resolveAfterTs),
+        255 // GAME_NONE: fuzz não exercita coleção
       )
       .accounts({
         config: configPda,
@@ -238,7 +239,8 @@ describe("oddies-bet :: fuzzing", function () {
             2,
             zeroOdds(),
             new BN(now + 100),
-            new BN(now + 100) // igual, não maior
+            new BN(now + 100), // igual, não maior
+            255
           )
           .accounts({
             config: configPda,

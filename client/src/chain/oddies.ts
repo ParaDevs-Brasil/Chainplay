@@ -1,5 +1,6 @@
 import { AnchorProvider, BN, Program, type Idl, type Wallet } from "@coral-xyz/anchor";
 import {
+  ComputeBudgetProgram,
   Connection,
   Keypair,
   PublicKey,
@@ -13,6 +14,10 @@ export const PROGRAM_ID = new PublicKey((idlJson as any).address);
 export const TOKEN_PROGRAM_ID = new PublicKey(
   "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
 );
+export const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
+  "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+);
+export const GAME_NONE = 255;
 export const LAMPORTS_PER_SOL = 1_000_000_000;
 
 let rpcUrl = "https://api.devnet.solana.com";
@@ -52,6 +57,55 @@ export const betPda = (market: PublicKey, mint: PublicKey) =>
     PROGRAM_ID
   )[0];
 
+// Identidade do jogo: PDAs da coleção + metadata do Token Metadata.
+export const metadataPda = (mint: PublicKey) =>
+  PublicKey.findProgramAddressSync(
+    [Buffer.from("metadata"), TOKEN_METADATA_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+    TOKEN_METADATA_PROGRAM_ID
+  )[0];
+
+export const masterEditionPda = (mint: PublicKey) =>
+  PublicKey.findProgramAddressSync(
+    [
+      Buffer.from("metadata"),
+      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+      mint.toBuffer(),
+      Buffer.from("edition"),
+    ],
+    TOKEN_METADATA_PROGRAM_ID
+  )[0];
+
+export const gameCollectionPda = (gameId: number) =>
+  PublicKey.findProgramAddressSync(
+    [Buffer.from("game_collection"), Buffer.from([gameId])],
+    PROGRAM_ID
+  )[0];
+
+export const collectionAuthorityPda = () =>
+  PublicKey.findProgramAddressSync([Buffer.from("collection_authority")], PROGRAM_ID)[0];
+
+/** Contas opcionais de coleção do place_bet a partir do game_id do mercado. */
+async function collectionAccounts(program: Program, gameId: number, ticketMint: PublicKey) {
+  // contas opcionais: omitidas quando não há coleção (place_bet as ignora)
+  const none: Record<string, PublicKey> = {};
+  if (gameId === GAME_NONE || gameId == null) return none;
+  const gc = gameCollectionPda(gameId);
+  const gcAcc: any = await (program.account as any).gameCollection
+    .fetchNullable(gc)
+    .catch(() => null);
+  if (!gcAcc) return none;
+  const collectionMint: PublicKey = gcAcc.collectionMint;
+  return {
+    gameCollection: gc,
+    ticketMetadata: metadataPda(ticketMint),
+    collectionMint,
+    collectionMetadata: metadataPda(collectionMint),
+    collectionMasterEdition: masterEditionPda(collectionMint),
+    collectionAuthority: collectionAuthorityPda(),
+    tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+  };
+}
+
 async function getProgram(injected: InjectedProvider): Promise<Program> {
   const conn = await getConnection();
   // O provider injetado já implementa a interface Wallet que o Anchor espera.
@@ -81,15 +135,20 @@ export async function placeBet(
   const program = await getProgram(injected);
   const marketId = new BN(marketIdStr);
   const market = marketPda(marketId);
-  const config: any = await (program.account as any).config.fetch(configPda());
+  const [config, marketAcc] = await Promise.all([
+    (program.account as any).config.fetch(configPda()),
+    (program.account as any).market.fetch(market),
+  ]);
 
   const ticketMint = Keypair.generate();
   const ticketAccount = Keypair.generate();
   const bet = betPda(market, ticketMint.publicKey);
+  // o ticket entra na coleção-identidade do jogo do mercado
+  const collection = await collectionAccounts(program, marketAcc.gameId, ticketMint.publicKey);
 
   const signature = await program.methods
     .placeBet(outcome, new BN(lamports))
-    .accounts({
+    .accountsPartial({
       config: configPda(),
       market,
       vault: vaultPda(market),
@@ -101,7 +160,10 @@ export async function placeBet(
       tokenProgram: TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
       rent: SYSVAR_RENT_PUBKEY,
+      ...collection,
     })
+    // metadata + verify na coleção custam CU extra além dos ~200k padrão
+    .preInstructions([ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 })])
     .signers([ticketMint, ticketAccount])
     .rpc();
 

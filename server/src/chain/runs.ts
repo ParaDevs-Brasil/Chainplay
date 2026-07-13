@@ -15,7 +15,9 @@ import { getGameData, type GameMatch } from "../games/matches.js";
 import { HttpError } from "../http/errors.js";
 import {
   BPS,
+  GAME,
   configPda,
+  gameIdOrNone,
   getChain,
   marketPda,
   vaultPda,
@@ -297,6 +299,7 @@ export async function createRun(
   odds[RUN_OUTCOME_WIN] = new BN(oddsBps);
   odds[RUN_OUTCOME_LOSE] = new BN(BPS + 1); // exigido > 1x; ninguém aposta nele
 
+  const gameId = mode === "infinite" ? GAME.infinite : GAME.hilo;
   await chain.program.methods
     .createMarket(
       marketId,
@@ -305,7 +308,8 @@ export async function createRun(
       2,
       odds,
       new BN(closeTs),
-      new BN(resolveAfterTs)
+      new BN(resolveAfterTs),
+      await gameIdOrNone(chain.program, gameId)
     )
     .accounts({
       config: configPda(),

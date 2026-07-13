@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { BN } from "@coral-xyz/anchor";
 import { SystemProgram } from "@solana/web3.js";
-import { configPda, getChain, marketPda, vaultPda } from "../chain/client.js";
+import { GAME, configPda, gameIdOrNone, getChain, marketPda, vaultPda } from "../chain/client.js";
 import { JsonFileStore } from "../store/jsonFile.js";
 import { addPoints } from "./leaderboard.js";
 import { getGameData } from "./matches.js";
@@ -108,7 +108,8 @@ async function createBucketMarket(
         3,
         Array(8).fill(new BN(0)),
         new BN(closeTs),
-        new BN(resolveAfterTs)
+        new BN(resolveAfterTs),
+        await gameIdOrNone(chain.program, GAME.stats)
       )
       .accounts({
         config: configPda(),

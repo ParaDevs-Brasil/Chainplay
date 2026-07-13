@@ -98,6 +98,122 @@ export const betPda = (market: PublicKey, mint: PublicKey) =>
 
 export const BPS = 10_000;
 
+// ---------------------------------------------------------------------------
+// Identidade dos jogos: uma Collection NFT por jogo (arte em NFTs/). O
+// `game_id` vai no create_market; os tickets de aposta entram na coleção do
+// jogo via place_bet. GAME_NONE = mercado sem coleção.
+// ---------------------------------------------------------------------------
+export const GAME_NONE = 255;
+
+export interface GameDef {
+  id: number;
+  slug: string; // arquivo da arte/metadata (NFTs/<slug>.png|json)
+  name: string; // nome da NFT (≤ 32 chars)
+  symbol: string; // símbolo da NFT (≤ 10 chars)
+}
+
+/** Registro canônico dos 7 jogos — precisa casar com GAME_COUNT no contrato. */
+export const GAMES: GameDef[] = [
+  { id: 0, slug: "hi-lo", name: "Hi-Lo", symbol: "HILO" },
+  { id: 1, slug: "infinite-hi-lo", name: "Infinite Hi-Lo", symbol: "IHILO" },
+  { id: 2, slug: "penalty-predictor", name: "Penalty Predictor", symbol: "PENA" },
+  { id: 3, slug: "survivor", name: "Survivor", symbol: "SURV" },
+  { id: 4, slug: "guess-the-stats", name: "Guess the Stats", symbol: "STATS" },
+  { id: 5, slug: "guess-the-team", name: "Guess the Team", symbol: "TEAM" },
+  { id: 6, slug: "live-challenge", name: "Live Challenge", symbol: "LIVE" },
+];
+
+/** Atalhos por nome para os call sites do backend não usarem número mágico. */
+export const GAME = {
+  hilo: 0,
+  infinite: 1,
+  penalty: 2,
+  survivor: 3,
+  stats: 4,
+  team: 5,
+  live: 6,
+} as const;
+
+export const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
+  "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+);
+
+export const metadataPda = (mint: PublicKey) =>
+  PublicKey.findProgramAddressSync(
+    [Buffer.from("metadata"), TOKEN_METADATA_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+    TOKEN_METADATA_PROGRAM_ID
+  )[0];
+
+export const masterEditionPda = (mint: PublicKey) =>
+  PublicKey.findProgramAddressSync(
+    [
+      Buffer.from("metadata"),
+      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+      mint.toBuffer(),
+      Buffer.from("edition"),
+    ],
+    TOKEN_METADATA_PROGRAM_ID
+  )[0];
+
+export const gameCollectionPda = (gameId: number) =>
+  PublicKey.findProgramAddressSync(
+    [Buffer.from("game_collection"), Buffer.from([gameId])],
+    PROGRAM_ID
+  )[0];
+
+export const collectionAuthorityPda = () =>
+  PublicKey.findProgramAddressSync([Buffer.from("collection_authority")], PROGRAM_ID)[0];
+
+const collectionReadyCache = new Map<number, boolean>();
+/**
+ * Retorna `gameId` se a coleção desse jogo já existe on-chain, senão GAME_NONE.
+ * Usado no create_market: enquanto as coleções não foram deployadas, os mercados
+ * saem sem coleção (apostas seguem funcionando, tickets sem marca) — o contrato
+ * exige as contas da coleção só quando game_id != GAME_NONE.
+ */
+export async function gameIdOrNone(program: Program, gameId: number): Promise<number> {
+  if (collectionReadyCache.get(gameId)) return gameId;
+  const gc = gameCollectionPda(gameId);
+  const acc = await (program.account as any).gameCollection
+    .fetchNullable(gc)
+    .catch(() => null);
+  if (acc) {
+    collectionReadyCache.set(gameId, true);
+    return gameId;
+  }
+  return GAME_NONE;
+}
+
+/**
+ * Monta as contas opcionais de coleção do place_bet a partir do game_id do
+ * mercado. GAME_NONE (ou coleção ainda não criada) → todas null (o ticket sai
+ * sem coleção, sem quebrar a aposta).
+ */
+export async function collectionAccounts(
+  program: Program,
+  gameId: number,
+  ticketMint: PublicKey
+) {
+  // contas opcionais: omitidas quando não há coleção (place_bet as ignora)
+  const none: Record<string, PublicKey> = {};
+  if (gameId === GAME_NONE || gameId == null) return none;
+  const gc = gameCollectionPda(gameId);
+  const gcAcc: any = await (program.account as any).gameCollection
+    .fetchNullable(gc)
+    .catch(() => null);
+  if (!gcAcc) return none; // coleção ainda não deployada: degrada pra sem-coleção
+  const collectionMint: PublicKey = gcAcc.collectionMint;
+  return {
+    gameCollection: gc,
+    ticketMetadata: metadataPda(ticketMint),
+    collectionMint,
+    collectionMetadata: metadataPda(collectionMint),
+    collectionMasterEdition: masterEditionPda(collectionMint),
+    collectionAuthority: collectionAuthorityPda(),
+    tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+  };
+}
+
 export function marketStateLabel(state: any): "open" | "resolved" | "voided" {
   if (state?.resolved) return "resolved";
   if (state?.voided) return "voided";

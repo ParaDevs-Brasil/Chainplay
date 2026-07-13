@@ -1,11 +1,24 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
+use anchor_spl::metadata::{
+    create_master_edition_v3, create_metadata_accounts_v3, set_and_verify_sized_collection_item,
+    mpl_token_metadata::types::{CollectionDetails, DataV2},
+    CreateMasterEditionV3, CreateMetadataAccountsV3, Metadata, SetAndVerifySizedCollectionItem,
+};
 use anchor_spl::token::{self, Burn, Mint, MintTo, SetAuthority, Token, TokenAccount};
 
 declare_id!("F4xhKysY8SrNwfqLZxyuJrZCWW8KPVbTjZWb4HHtD4ZA");
 
 pub const MAX_OUTCOMES: usize = 8;
 pub const BPS_DENOMINATOR: u64 = 10_000;
+/// Quantos jogos existem (uma coleção-identidade por jogo). Os `game_id` válidos
+/// vão de 0 a GAME_COUNT-1 e mapeiam para as artes em `NFTs/`.
+pub const GAME_COUNT: u8 = 7;
+/// Sem coleção (ex.: mercados demo/genéricos): o ticket não entra em coleção.
+pub const GAME_NONE: u8 = u8::MAX;
+pub const MAX_NFT_NAME_LEN: usize = 32;
+pub const MAX_NFT_SYMBOL_LEN: usize = 10;
+pub const MAX_NFT_URI_LEN: usize = 200;
 
 #[program]
 pub mod oddies_bet {
@@ -24,6 +37,107 @@ pub mod oddies_bet {
         Ok(())
     }
 
+    /// Cria a Collection NFT de identidade de um jogo (ex.: "Penalty Predictor").
+    /// Uma por jogo — os tickets de aposta desse jogo entram nesta coleção via
+    /// `place_bet`, herdando a arte/identidade do jogo em carteiras e explorers.
+    /// Só a authority. O mint/update authority de toda coleção é a PDA
+    /// `collection_authority`, então o próprio programa assina a verificação dos
+    /// itens (nenhuma chave externa precisa ser a autoridade da coleção).
+    pub fn create_game_collection(
+        ctx: Context<CreateGameCollection>,
+        game_id: u8,
+        name: String,
+        symbol: String,
+        uri: String,
+    ) -> Result<()> {
+        require!(game_id < GAME_COUNT, BetError::InvalidGameId);
+        require!(name.len() <= MAX_NFT_NAME_LEN, BetError::MetadataTooLong);
+        require!(symbol.len() <= MAX_NFT_SYMBOL_LEN, BetError::MetadataTooLong);
+        require!(uri.len() <= MAX_NFT_URI_LEN, BetError::MetadataTooLong);
+
+        // Guarda a identidade do jogo no PDA: place_bet reusa esses valores como
+        // metadados de cada ticket (o ticket compartilha nome/arte do jogo).
+        let gc = &mut ctx.accounts.game_collection;
+        gc.game_id = game_id;
+        gc.collection_mint = ctx.accounts.collection_mint.key();
+        gc.bump = ctx.bumps.game_collection;
+        gc.collection_authority_bump = ctx.bumps.collection_authority;
+        gc.ticket_name = name.clone();
+        gc.ticket_symbol = symbol.clone();
+        gc.ticket_uri = uri.clone();
+
+        let signer: &[&[&[u8]]] = &[&[
+            b"collection_authority",
+            &[ctx.bumps.collection_authority],
+        ]];
+
+        // 1) minta 1 unidade da coleção pra conta custodiada pela PDA
+        token::mint_to(
+            CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info(),
+                MintTo {
+                    mint: ctx.accounts.collection_mint.to_account_info(),
+                    to: ctx.accounts.collection_token_account.to_account_info(),
+                    authority: ctx.accounts.collection_authority.to_account_info(),
+                },
+                signer,
+            ),
+            1,
+        )?;
+
+        // 2) metadados on-chain marcados como coleção "sized" (size cresce a cada item)
+        create_metadata_accounts_v3(
+            CpiContext::new_with_signer(
+                ctx.accounts.token_metadata_program.to_account_info(),
+                CreateMetadataAccountsV3 {
+                    metadata: ctx.accounts.collection_metadata.to_account_info(),
+                    mint: ctx.accounts.collection_mint.to_account_info(),
+                    mint_authority: ctx.accounts.collection_authority.to_account_info(),
+                    payer: ctx.accounts.authority.to_account_info(),
+                    update_authority: ctx.accounts.collection_authority.to_account_info(),
+                    system_program: ctx.accounts.system_program.to_account_info(),
+                    rent: ctx.accounts.rent.to_account_info(),
+                },
+                signer,
+            ),
+            DataV2 {
+                name,
+                symbol,
+                uri,
+                seller_fee_basis_points: 0,
+                creators: None,
+                collection: None,
+                uses: None,
+            },
+            true,
+            true,
+            Some(CollectionDetails::V1 { size: 0 }),
+        )?;
+
+        // 3) master edition (max_supply 0) — torna o mint uma NFT e habilita a
+        //    coleção a verificar itens
+        create_master_edition_v3(
+            CpiContext::new_with_signer(
+                ctx.accounts.token_metadata_program.to_account_info(),
+                CreateMasterEditionV3 {
+                    edition: ctx.accounts.collection_master_edition.to_account_info(),
+                    mint: ctx.accounts.collection_mint.to_account_info(),
+                    update_authority: ctx.accounts.collection_authority.to_account_info(),
+                    mint_authority: ctx.accounts.collection_authority.to_account_info(),
+                    payer: ctx.accounts.authority.to_account_info(),
+                    metadata: ctx.accounts.collection_metadata.to_account_info(),
+                    token_program: ctx.accounts.token_program.to_account_info(),
+                    system_program: ctx.accounts.system_program.to_account_info(),
+                    rent: ctx.accounts.rent.to_account_info(),
+                },
+                signer,
+            ),
+            Some(0),
+        )?;
+
+        Ok(())
+    }
+
     /// Abre um mercado de apostas para um fixture (partida).
     ///
     /// - `Parimutuel` (multiplayer): os apostadores dividem o pote entre si; odds emergem do pool.
@@ -37,10 +151,17 @@ pub mod oddies_bet {
         odds_bps: [u64; MAX_OUTCOMES],
         close_ts: i64,
         resolve_after_ts: i64,
+        game_id: u8,
     ) -> Result<()> {
         require!(
             outcome_count >= 2 && (outcome_count as usize) <= MAX_OUTCOMES,
             BetError::InvalidOutcomeCount
+        );
+        // game_id identifica de qual jogo é o mercado (define a coleção-identidade
+        // dos tickets). GAME_NONE = mercado sem coleção (demo/genérico).
+        require!(
+            game_id < GAME_COUNT || game_id == GAME_NONE,
+            BetError::InvalidGameId
         );
         let now = Clock::get()?.unix_timestamp;
         require!(close_ts > now, BetError::CloseInPast);
@@ -57,6 +178,7 @@ pub mod oddies_bet {
         let market = &mut ctx.accounts.market;
         market.market_id = market_id;
         market.fixture_id = fixture_id;
+        market.game_id = game_id;
         market.kind = kind;
         market.state = MarketState::Open;
         market.outcome_count = outcome_count;
@@ -183,12 +305,9 @@ pub mod oddies_bet {
         bet.claimed = false;
         bet.bump = ctx.bumps.bet;
 
-        // Minta o ticket para o apostador e congela o supply em 1.
-        let market_signer: &[&[&[u8]]] = &[&[
-            b"market",
-            &market.market_id.to_le_bytes(),
-            &[market.bump],
-        ]];
+        // Minta o ticket para o apostador.
+        let market_id_bytes = market.market_id.to_le_bytes();
+        let market_signer: &[&[&[u8]]] = &[&[b"market", &market_id_bytes, &[market.bump]]];
         token::mint_to(
             CpiContext::new_with_signer(
                 ctx.accounts.token_program.to_account_info(),
@@ -201,6 +320,106 @@ pub mod oddies_bet {
             ),
             1,
         )?;
+
+        // Metadados + identidade do jogo: cria a metadata do ticket e, se o
+        // mercado pertence a um jogo com coleção, verifica o ticket como membro
+        // da Collection NFT desse jogo (a arte/identidade do jogo passa a
+        // aparecer na carteira do apostador). Feito enquanto o `market` ainda é
+        // mint authority — a metadata exige a mint authority como signer.
+        if market.game_id != GAME_NONE {
+            let game = ctx
+                .accounts
+                .game_collection
+                .as_ref()
+                .ok_or(BetError::MissingGameCollection)?;
+            require!(game.game_id == market.game_id, BetError::GameMismatch);
+            let collection_mint = ctx
+                .accounts
+                .collection_mint
+                .as_ref()
+                .ok_or(BetError::MissingGameCollection)?;
+            require!(
+                collection_mint.key() == game.collection_mint,
+                BetError::GameMismatch
+            );
+            let ticket_metadata = ctx
+                .accounts
+                .ticket_metadata
+                .as_ref()
+                .ok_or(BetError::MissingGameCollection)?;
+            let collection_metadata = ctx
+                .accounts
+                .collection_metadata
+                .as_ref()
+                .ok_or(BetError::MissingGameCollection)?;
+            let collection_master_edition = ctx
+                .accounts
+                .collection_master_edition
+                .as_ref()
+                .ok_or(BetError::MissingGameCollection)?;
+            let collection_authority = ctx
+                .accounts
+                .collection_authority
+                .as_ref()
+                .ok_or(BetError::MissingGameCollection)?;
+            let token_metadata_program = ctx
+                .accounts
+                .token_metadata_program
+                .as_ref()
+                .ok_or(BetError::MissingGameCollection)?;
+
+            create_metadata_accounts_v3(
+                CpiContext::new_with_signer(
+                    token_metadata_program.to_account_info(),
+                    CreateMetadataAccountsV3 {
+                        metadata: ticket_metadata.to_account_info(),
+                        mint: ctx.accounts.ticket_mint.to_account_info(),
+                        mint_authority: market.to_account_info(),
+                        payer: ctx.accounts.bettor.to_account_info(),
+                        update_authority: collection_authority.to_account_info(),
+                        system_program: ctx.accounts.system_program.to_account_info(),
+                        rent: ctx.accounts.rent.to_account_info(),
+                    },
+                    market_signer,
+                ),
+                DataV2 {
+                    name: game.ticket_name.clone(),
+                    symbol: game.ticket_symbol.clone(),
+                    uri: game.ticket_uri.clone(),
+                    seller_fee_basis_points: 0,
+                    creators: None,
+                    collection: None,
+                    uses: None,
+                },
+                true,
+                false,
+                None,
+            )?;
+
+            // set_and_verify: define a coleção e verifica o item num único CPI,
+            // assinado pela PDA collection_authority (update authority da coleção
+            // e do item). Incrementa o `size` da coleção.
+            let col_signer: &[&[&[u8]]] =
+                &[&[b"collection_authority", &[game.collection_authority_bump]]];
+            set_and_verify_sized_collection_item(
+                CpiContext::new_with_signer(
+                    token_metadata_program.to_account_info(),
+                    SetAndVerifySizedCollectionItem {
+                        metadata: ticket_metadata.to_account_info(),
+                        collection_authority: collection_authority.to_account_info(),
+                        payer: ctx.accounts.bettor.to_account_info(),
+                        update_authority: collection_authority.to_account_info(),
+                        collection_mint: collection_mint.to_account_info(),
+                        collection_metadata: collection_metadata.to_account_info(),
+                        collection_master_edition: collection_master_edition.to_account_info(),
+                    },
+                    col_signer,
+                ),
+                None,
+            )?;
+        }
+
+        // Congela o supply do ticket em 1: ninguém minta tickets extras.
         token::set_authority(
             CpiContext::new_with_signer(
                 ctx.accounts.token_program.to_account_info(),
@@ -452,6 +671,63 @@ pub struct Initialize<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(game_id: u8)]
+pub struct CreateGameCollection<'info> {
+    #[account(seeds = [b"config"], bump = config.bump, has_one = authority)]
+    pub config: Account<'info, Config>,
+    #[account(
+        init,
+        payer = authority,
+        space = 8 + GameCollection::INIT_SPACE,
+        seeds = [b"game_collection".as_ref(), &[game_id]],
+        bump
+    )]
+    pub game_collection: Account<'info, GameCollection>,
+    /// PDA que é mint/update authority de todas as coleções — o programa assina
+    /// com ela pra mintar a coleção e verificar os itens.
+    /// CHECK: PDA validada por seeds; não guarda dados.
+    #[account(seeds = [b"collection_authority"], bump)]
+    pub collection_authority: UncheckedAccount<'info>,
+    #[account(
+        init,
+        payer = authority,
+        mint::decimals = 0,
+        mint::authority = collection_authority,
+        mint::freeze_authority = collection_authority,
+    )]
+    pub collection_mint: Account<'info, Mint>,
+    #[account(
+        init,
+        payer = authority,
+        token::mint = collection_mint,
+        token::authority = collection_authority,
+    )]
+    pub collection_token_account: Account<'info, TokenAccount>,
+    /// CHECK: criada por CPI ao Token Metadata; PDA validada por seeds.
+    #[account(
+        mut,
+        seeds = [b"metadata", token_metadata_program.key().as_ref(), collection_mint.key().as_ref()],
+        seeds::program = token_metadata_program.key(),
+        bump
+    )]
+    pub collection_metadata: UncheckedAccount<'info>,
+    /// CHECK: criada por CPI ao Token Metadata; PDA validada por seeds.
+    #[account(
+        mut,
+        seeds = [b"metadata", token_metadata_program.key().as_ref(), collection_mint.key().as_ref(), b"edition"],
+        seeds::program = token_metadata_program.key(),
+        bump
+    )]
+    pub collection_master_edition: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    pub token_metadata_program: Program<'info, Metadata>,
+    pub token_program: Program<'info, Token>,
+    pub system_program: Program<'info, System>,
+    pub rent: Sysvar<'info, Rent>,
+}
+
+#[derive(Accounts)]
 #[instruction(market_id: u64)]
 pub struct CreateMarket<'info> {
     #[account(seeds = [b"config"], bump = config.bump, has_one = authority)]
@@ -529,6 +805,29 @@ pub struct PlaceBet<'info> {
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
+
+    // --- Identidade do jogo (opcionais): presentes quando market.game_id != GAME_NONE ---
+    /// Registro da coleção do jogo do mercado (define nome/arte do ticket).
+    #[account(
+        seeds = [b"game_collection".as_ref(), &[market.game_id]],
+        bump = game_collection.bump,
+    )]
+    pub game_collection: Option<Account<'info, GameCollection>>,
+    /// CHECK: metadata do ticket; o Token Metadata valida a derivação da PDA no CPI.
+    #[account(mut)]
+    pub ticket_metadata: Option<UncheckedAccount<'info>>,
+    /// Mint da coleção do jogo (checado contra game_collection.collection_mint no handler).
+    #[account(mut)]
+    pub collection_mint: Option<Account<'info, Mint>>,
+    /// CHECK: metadata da coleção; validada pelo Token Metadata no CPI (size cresce).
+    #[account(mut)]
+    pub collection_metadata: Option<UncheckedAccount<'info>>,
+    /// CHECK: master edition da coleção; validada pelo Token Metadata no CPI.
+    pub collection_master_edition: Option<UncheckedAccount<'info>>,
+    /// CHECK: PDA update authority da coleção; valida por seeds, assina via bump armazenado.
+    #[account(seeds = [b"collection_authority"], bump)]
+    pub collection_authority: Option<UncheckedAccount<'info>>,
+    pub token_metadata_program: Option<Program<'info, Metadata>>,
 }
 
 #[derive(Accounts)]
@@ -617,6 +916,8 @@ pub enum MarketState {
 pub struct Market {
     pub market_id: u64,
     pub fixture_id: u64,
+    /// Jogo do mercado: define a coleção-identidade dos tickets. GAME_NONE = sem coleção.
+    pub game_id: u8,
     pub kind: MarketKind,
     pub state: MarketState,
     pub outcome_count: u8,
@@ -636,6 +937,23 @@ pub struct Market {
     pub outstanding: u64,
     pub bump: u8,
     pub vault_bump: u8,
+}
+
+/// Identidade on-chain de um jogo: a Collection NFT + os metadados que cada
+/// ticket do jogo herda. Uma por game_id.
+#[account]
+#[derive(InitSpace)]
+pub struct GameCollection {
+    pub game_id: u8,
+    pub collection_mint: Pubkey,
+    pub bump: u8,
+    pub collection_authority_bump: u8,
+    #[max_len(32)]
+    pub ticket_name: String,
+    #[max_len(10)]
+    pub ticket_symbol: String,
+    #[max_len(200)]
+    pub ticket_uri: String,
 }
 
 #[account]
@@ -717,4 +1035,12 @@ pub enum BetError {
     InvalidResolveWindow,
     #[msg("Não autorizado")]
     Unauthorized,
+    #[msg("game_id inválido")]
+    InvalidGameId,
+    #[msg("Metadado (nome/símbolo/uri) longo demais")]
+    MetadataTooLong,
+    #[msg("Mercado pertence a um jogo com coleção: contas da coleção são obrigatórias")]
+    MissingGameCollection,
+    #[msg("Coleção não corresponde ao jogo do mercado")]
+    GameMismatch,
 }

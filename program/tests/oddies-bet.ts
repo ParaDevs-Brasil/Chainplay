@@ -25,6 +25,10 @@ const BPF_LOADER_UPGRADEABLE_ID = new PublicKey(
 
 const SOL = LAMPORTS_PER_SOL;
 const FEE_BPS = 1000; // 10%
+const GAME_NONE = 255;
+const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
+  "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+);
 
 describe("oddies-bet", () => {
   const provider = anchor.AnchorProvider.env();
@@ -125,7 +129,8 @@ describe("oddies-bet", () => {
     oddsBps: BN[],
     closeTs: number,
     resolveAfterTs: number,
-    signer: Keypair | anchor.Wallet = authority
+    signer: Keypair | anchor.Wallet = authority,
+    gameId: number = GAME_NONE
   ) {
     const isWallet = "publicKey" in signer && !(signer instanceof Keypair);
     await program.methods
@@ -136,7 +141,8 @@ describe("oddies-bet", () => {
         outcomeCount,
         oddsBps,
         new BN(closeTs),
-        new BN(resolveAfterTs)
+        new BN(resolveAfterTs),
+        gameId
       )
       .accounts({
         config: configPda,

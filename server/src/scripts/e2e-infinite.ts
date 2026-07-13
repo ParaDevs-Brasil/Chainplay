@@ -8,6 +8,7 @@
  */
 import { BN } from "@coral-xyz/anchor";
 import {
+  ComputeBudgetProgram,
   Keypair,
   PublicKey,
   SystemProgram,
@@ -15,6 +16,7 @@ import {
 } from "@solana/web3.js";
 import {
   betPda,
+  collectionAccounts,
   configPda,
   getChain,
   TOKEN_PROGRAM_ID,
@@ -55,12 +57,16 @@ async function playOneRun(attempt: number): Promise<boolean> {
   );
 
   const market = new PublicKey(run.marketPda);
-  const config: any = await (chain.program.account as any).config.fetch(configPda());
+  const [config, marketAcc] = await Promise.all([
+    (chain.program.account as any).config.fetch(configPda()),
+    (chain.program.account as any).market.fetch(market),
+  ]);
   const ticketMint = Keypair.generate();
   const ticketAccount = Keypair.generate();
+  const collection = await collectionAccounts(chain.program, marketAcc.gameId, ticketMint.publicKey);
   await chain.program.methods
     .placeBet(0, new BN(stake))
-    .accounts({
+    .accountsPartial({
       config: configPda(),
       market,
       vault: vaultPda(market),
@@ -72,7 +78,9 @@ async function playOneRun(attempt: number): Promise<boolean> {
       tokenProgram: TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
       rent: SYSVAR_RENT_PUBKEY,
+      ...collection,
     })
+    .preInstructions([ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 })])
     .signers([bettor, ticketMint, ticketAccount])
     .rpc();
 
