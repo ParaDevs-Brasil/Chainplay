@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import { useLang } from "./i18n";
 import { LoginPanel, useAccount, useAccountCta } from "./chain/account";
+import { api } from "./chain/http";
 import { formatSol } from "./chain/oddies";
 import HowTo from "./components/HowTo";
 import { celebrateCorrect } from "./celebration";
@@ -43,16 +44,12 @@ export default function Markets() {
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch("/api/markets");
-      // proxy do vite responde 500/texto quando o server da API está fora
-      if (!res.ok || !res.headers.get("content-type")?.includes("json")) {
-        throw new Error(t.markets.serverOffline);
-      }
-      const json = await res.json();
+      const json = await api("/api/markets");
       setMarkets(json.markets ?? []);
       setError("");
     } catch (e) {
-      setError(String((e as Error).message));
+      console.error("[markets] refresh falhou:", e);
+      setError(t.markets.serverOffline);
     } finally {
       setLoading(false);
     }
@@ -84,6 +81,7 @@ export default function Markets() {
       playSfx("correct");
       refresh();
     } catch (e) {
+      console.error("[markets] aposta falhou:", e);
       setError(`${t.markets.error}: ${String((e as Error).message)}`);
     } finally {
       setBetting(null);

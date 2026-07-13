@@ -40,9 +40,12 @@ authRoutes.post(
 );
 
 // Login não-custodial via web3 connect: nonce → assinatura → sessão
-authRoutes.post("/wallet/nonce", (req, res) => {
-  res.json(walletChallenge(req.body?.address));
-});
+authRoutes.post(
+  "/wallet/nonce",
+  asyncHandler(async (req, res) => {
+    res.json(walletChallenge(req.body?.address));
+  })
+);
 
 authRoutes.post(
   "/wallet/verify",
@@ -61,8 +64,11 @@ authRoutes.get(
     if (chain) {
       try {
         balance = await chain.connection.getBalance(publicKeyOf(user));
-      } catch {
-        /* RPC fora: devolve sem saldo */
+      } catch (err) {
+        // RPC fora: devolve sem saldo, mas deixa rastro no log
+        console.warn(
+          `[auth] falha ao consultar saldo de ${userAddress(user).slice(0, 6)}…: ${(err as Error).message}`
+        );
       }
     }
     res.json({

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import { useLang } from "./i18n";
 import { LoginPanel, useAccount, useAccountCta } from "./chain/account";
+import { ApiError, api } from "./chain/http";
 import { formatSol } from "./chain/oddies";
 import { celebrateWin } from "./celebration";
 import { playSfx } from "./sfx";
@@ -43,14 +44,16 @@ export default function WalletPage() {
     setState("loading");
     setError("");
     try {
-      const res = await fetch(`/api/tickets/${account.address}`);
-      if (res.status === 503) throw new Error(t.walletPage.onchainOff);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+      const data = await api(`/api/tickets/${account.address}`);
       setTickets(data.tickets ?? []);
       setState("ready");
     } catch (e) {
-      setError(String((e as Error).message ?? e));
+      console.error("[wallet] listar tickets falhou:", e);
+      const msg =
+        e instanceof ApiError && e.status === 503
+          ? t.walletPage.onchainOff
+          : String((e as Error).message ?? e);
+      setError(msg);
       setState("error");
     }
   }, [account.address, t]);
@@ -69,6 +72,7 @@ export default function WalletPage() {
       playSfx("win");
       refresh();
     } catch (e) {
+      console.error("[wallet] claim falhou:", e);
       setError(`${t.walletPage.claimError}: ${String((e as Error).message ?? e)}`);
     } finally {
       setClaiming(null);

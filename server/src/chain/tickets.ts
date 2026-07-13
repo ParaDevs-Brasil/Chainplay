@@ -7,6 +7,7 @@ import {
   marketStateLabel,
   TOKEN_PROGRAM_ID,
 } from "./client.js";
+import { HttpError } from "../http/errors.js";
 import { findMarketRecord } from "./markets.js";
 import { getRun, listRunsByWallet } from "./runs.js";
 
@@ -42,7 +43,12 @@ export interface TicketView {
 export async function listTickets(wallet: string): Promise<TicketView[]> {
   const chain = getChain();
   if (!chain) return [];
-  const owner = new PublicKey(wallet);
+  let owner: PublicKey;
+  try {
+    owner = new PublicKey(wallet);
+  } catch {
+    throw new HttpError(400, "wallet inválida");
+  }
 
   const [tokenAccounts, allBets] = await Promise.all([
     chain.connection.getParsedTokenAccountsByOwner(owner, {
