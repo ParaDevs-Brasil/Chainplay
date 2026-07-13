@@ -2,8 +2,41 @@
 
 > Consolidação de docs/security-review.md (achados #5-7) e docs/logs-erros-inconsistencias.md
 > (20 ocorrências) em formato de auditoria acionável: comportamento atual, problema,
-> proposta de melhoria e código sugerido por achado. Nenhuma correção foi aplicada ao
-> código-fonte — este documento é a proposta para implementação posterior.
+> proposta de melhoria e código sugerido por achado.
+>
+> **Atualização 2026-07-13 — correções aplicadas.** Os achados de **segurança** (IDOR #1
+> runs, #2 penalty, #3 survivor) e os de **maior severidade** de logs/erros foram
+> implementados e verificados (tsc do server e do client limpos + smoke test ao vivo do
+> fluxo de IDOR contra o server local). Status por achado no quadro abaixo. O código
+> sugerido em cada entrada permanece como referência do que foi feito; onde a
+> implementação divergiu do diff original (ex.: passar `UserRecord` inteiro em vez do
+> cast de `userId`), o código real seguiu a "nota de implementação" da própria entrada.
+>
+> ### Status das correções (2026-07-13)
+>
+> | Achado | Status | Observação |
+> |---|---|---|
+> | #1 IDOR runs | ✅ Corrigido | `requireSession` + `assertRunOwner` + `userId` no `RunRecord`; wallet vem da sessão |
+> | #2 IDOR penalty | ✅ Corrigido | `requireSession` + `assertSessionOwner` + `userId` no `SessionRecord` |
+> | #3 IDOR survivor | ✅ Corrigido | `requireSession`; wallet do pick vem da sessão, não do body |
+> | #4 segredos no console (subscribe) | ✅ Corrigido | JWT/token mascarados; aponta pro arquivo em disco |
+> | #5 HttpError 4xx não logada | ✅ Corrigido | `errorHandler` loga 4xx como `warn`, 5xx como `error` |
+> | #6/#7 RPC de saldo engolida | ✅ Corrigido | `/auth/me` loga `console.warn` como `fundWelcome` |
+> | #8 client sem console.error | ✅ Corrigido | `console.error/warn` com prefixo por módulo em todos os catches |
+> | #9 catch vazio (SIWS) | ✅ Corrigido | `console.warn` antes de seguir |
+> | #11 err.message bruto no 500 | ✅ Corrigido | 500 devolve mensagem genérica; detalhe só no log |
+> | #12 parse de wallet sem try/catch | ✅ Corrigido | `listTickets` relança `HttpError(400)` |
+> | #13 erro de domínio → 400 cego | ✅ Parcial | rotas de runs/penalty repassam `HttpError` já lançado (409/429/403/404 preservados) em vez de reembrulhar tudo em 400 |
+> | #14 status 409/429 | ✅ Corrigido | `chain/runs.ts` lança `HttpError(409/429)` direto |
+> | #15 markets sem requireChain | ✅ Corrigido | `requireChain` aplicado em `markets.routes.ts` |
+> | #16 rotas sem asyncHandler | ✅ Corrigido | `/wallet/nonce`, `/wallet/:wallet`, `/:id` envoltos |
+> | #21 3 helpers de fetch no client | ✅ Corrigido | helper único em `client/src/chain/http.ts` |
+> | #23 validação de input em runs | ✅ Corrigido | `target`/`stakeLamports` validados como inteiro na borda |
+> | #10 logger estruturado | ⏳ Adiado | prefixo por módulo já padronizado; logger central fica pra depois |
+> | #17/#18/#19/#20/#22 dívidas de consistência | ⏳ Adiado | renome de campos e pacote de tipos/PDA compartilhado — sem risco funcional, fora do escopo desta rodada |
+>
+> O texto original de cada achado abaixo foi preservado como registro histórico da
+> análise.
 >
 > Data: 2026-07-12 · Branch: feature/contract
 >
