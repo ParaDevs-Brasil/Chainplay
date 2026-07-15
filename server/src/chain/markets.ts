@@ -48,7 +48,9 @@ export interface MarketRecord {
   game: "1x2";
   closeTs: number;
   resolveAfterTs: number;
-  status: "open" | "resolved" | "voided";
+  /** `obsolete` = criado num epoch anterior do layout de Market: a conta
+   *  on-chain não decodifica mais — não dá pra listar, apostar nem resolver. */
+  status: "open" | "resolved" | "voided" | "obsolete";
   winningOutcome?: number;
   demo?: boolean;
   /** Placar pré-sorteado usado para liquidar mercados demo (sem feed real). */
@@ -89,26 +91,47 @@ async function createParimutuelMarket(rec: Omit<MarketRecord, "pda" | "status" |
   // Survivor — cada aposta declara o seu game_id no place_bet e o ticket entra
   // na coleção do jogo correspondente.
   const { gameId, allowedGames } = await marketGames(chain.program, GAME.team, GAME.survivor);
-  await chain.program.methods
-    .createMarket(
-      marketId,
-      new BN(rec.fixtureId),
-      { parimutuel: {} },
-      3,
-      zeroOdds(),
-      new BN(rec.closeTs),
-      new BN(rec.resolveAfterTs),
-      gameId,
-      allowedGames
-    )
-    .accounts({
-      config: configPda(),
-      market,
-      vault: vaultPda(market),
-      authority: chain.authority.publicKey,
-      systemProgram: SystemProgram.programId,
-    })
-    .rpc();
+  try {
+    await chain.program.methods
+      .createMarket(
+        marketId,
+        new BN(rec.fixtureId),
+        { parimutuel: {} },
+        3,
+        zeroOdds(),
+        new BN(rec.closeTs),
+        new BN(rec.resolveAfterTs),
+        gameId,
+        allowedGames
+      )
+      .accounts({
+        config: configPda(),
+        market,
+        vault: vaultPda(market),
+        authority: chain.authority.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+  } catch (err) {
+    // Conta já existe (ex.: store recriado sem o registro do mercado): adota o
+    // mercado on-chain se ele decodifica no layout atual — senão propaga.
+    if (!/already in use/i.test((err as Error).message)) throw err;
+    const onchain: any = await (chain.program.account as any).market.fetch(market);
+    const adopted: MarketRecord = {
+      ...rec,
+      closeTs: onchain.closeTs.toNumber(),
+      resolveAfterTs: onchain.resolveAfterTs.toNumber(),
+      pda: market.toBase58(),
+      status: marketStateLabel(onchain.state),
+      createdAt: Date.now(),
+    };
+    loadStore().markets.push(adopted);
+    saveStore();
+    console.log(
+      `[markets] mercado 1X2 adotado (já existia on-chain): ${rec.home} × ${rec.away} (market_id=${rec.marketId})`
+    );
+    return adopted;
+  }
   const full: MarketRecord = {
     ...rec,
     pda: market.toBase58(),
@@ -231,6 +254,22 @@ async function cancelOpenDemoMarkets() {
 export async function syncMarkets() {
   if (!getChain()) return;
   const s = loadStore();
+
+  // Aposenta registros de epochs anteriores do market_id: o mercado deles é de
+  // um layout antigo do programa e ficaria pra sempre "open" travando o fixture
+  // (o resolve/cancel também falharia no deserialize on-chain).
+  let retired = false;
+  for (const m of s.markets) {
+    if (!m.demo && m.status === "open" && Number(m.marketId) < FIXTURE_MARKET_EPOCH) {
+      m.status = "obsolete";
+      retired = true;
+      console.log(
+        `[markets] market_id=${m.marketId} (${m.home} × ${m.away}) aposentado: epoch antigo do layout`
+      );
+    }
+  }
+  if (retired) saveStore();
+
   const fixtures = await fetchUpcomingFixtures();
 
   if (!fixtures || !fixtures.length) {
@@ -241,7 +280,9 @@ export async function syncMarkets() {
   await cancelOpenDemoMarkets();
 
   for (const f of fixtures) {
-    if (s.markets.some((m) => m.fixtureId === f.FixtureId && !m.demo)) continue;
+    // dedup pelo market_id do epoch ATUAL: um registro de epoch antigo do mesmo
+    // fixture (aposentado acima) não pode impedir a recriação do mercado
+    if (s.markets.some((m) => m.marketId === fixtureMarketId(f.FixtureId))) continue;
     const home = f.Participant1IsHome ? f.Participant1 : f.Participant2;
     const away = f.Participant1IsHome ? f.Participant2 : f.Participant1;
     const closeTs = Math.floor(f.StartTime / 1000);
@@ -370,16 +411,33 @@ export async function listMarkets(): Promise<MarketView[]> {
     }));
   }
 
-  const accounts: any[] = await (chain.program.account as any).market.fetchMultiple(
+  // Decodifica conta a conta e tolera falha: um market de layout incompatível
+  // (ex.: criado por uma versão anterior do programa durante um upgrade) sai da
+  // listagem — o client não conseguiria decodificá-lo no place_bet (o
+  // fetchMultiple antigo era pior: lançava no primeiro decode ruim e derrubava
+  // a listagem inteira).
+  const infos = await chain.connection.getMultipleAccountsInfo(
     recent.map((m) => marketPda(new BN(m.marketId)))
   );
-  return recent.map((m, i) => {
-    const acc = accounts[i];
+  const views: MarketView[] = [];
+  recent.forEach((m, i) => {
+    const info = infos[i];
+    let acc: any = null;
+    if (info) {
+      try {
+        acc = (chain.program.coder.accounts as any).decode("market", info.data);
+      } catch (err) {
+        console.warn(
+          `[markets] market_id=${m.marketId} de layout incompatível fora da listagem: ${(err as Error).message}`
+        );
+        return;
+      }
+    }
     const pools: number[] = acc
       ? acc.pools.slice(0, 3).map((p: BN) => p.toNumber())
       : [0, 0, 0];
     const totalPool = pools.reduce((a, b) => a + b, 0);
-    return {
+    views.push({
       ...m,
       status: acc ? marketStateLabel(acc.state) : m.status,
       winningOutcome: acc?.state?.resolved ? acc.winningOutcome : m.winningOutcome,
@@ -387,8 +445,9 @@ export async function listMarkets(): Promise<MarketView[]> {
       totalPool,
       poolPct: pools.map((p) => (totalPool ? Math.round((p / totalPool) * 100) : 0)),
       secondsToClose: Math.max(0, m.closeTs - now),
-    };
+    });
   });
+  return views;
 }
 
 export function findMarketRecord(marketId: string): MarketRecord | undefined {
