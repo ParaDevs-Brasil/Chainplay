@@ -556,33 +556,53 @@ export async function settleRuns() {
     const outcome = run.finalOutcome ?? RUN_OUTCOME_LOSE;
     const market = marketPda(new BN(run.marketId));
     try {
-      await chain.program.methods
-        .resolveMarket(outcome)
-        .accounts({
-          config: configPda(),
-          market,
-          authority: chain.authority.publicKey,
-        })
-        .rpc();
-
-      // Devolve pro caixa o que não está comprometido com o jogador.
-      const acc: any = await (chain.program.account as any).market.fetch(market);
-      const vault = vaultPda(market);
-      const rentMin = await chain.connection.getMinimumBalanceForRentExemption(0);
-      const usable = (await chain.connection.getBalance(vault)) - rentMin;
-      const free = usable - (acc.outstanding as BN).toNumber();
-      if (free > 0) {
+      // Idempotência: tenta resolver e trata "mercado não está aberto" (6004)
+      // como já-resolvido. Sem isso, se uma passada anterior resolveu on-chain
+      // mas falhou na reciclagem, o cron re-tentava resolveMarket pra sempre e a
+      // run nunca saía do estado não-terminal. NÃO decodifica o market pra checar
+      // estado antes (isso quebraria em markets de layout antiga durante um
+      // upgrade do programa) — deixa o próprio resolveMarket ser a fonte.
+      try {
         await chain.program.methods
-          .withdrawHouse(new BN(free))
+          .resolveMarket(outcome)
           .accounts({
             config: configPda(),
             market,
-            vault,
-            teamWallet: (await (chain.program.account as any).config.fetch(configPda())).teamWallet,
             authority: chain.authority.publicKey,
-            systemProgram: SystemProgram.programId,
           })
           .rpc();
+      } catch (e) {
+        // 6004 = já resolvido → segue pra marcar terminal; qualquer outro erro
+        // (RPC/rede) → propaga pra retentar no próximo ciclo
+        if (!/MarketNotOpen|6004/i.test((e as Error).message)) throw e;
+      }
+
+      // Reciclagem da liquidez livre: best-effort — falhar aqui (inclusive um
+      // decode de market de layout antiga) NÃO re-resolve nem trava a run.
+      let free = 0;
+      try {
+        const acc: any = await (chain.program.account as any).market.fetch(market);
+        const vault = vaultPda(market);
+        const rentMin = await chain.connection.getMinimumBalanceForRentExemption(0);
+        const usable = (await chain.connection.getBalance(vault)) - rentMin;
+        free = usable - (acc.outstanding as BN).toNumber();
+        if (free > 0) {
+          await chain.program.methods
+            .withdrawHouse(new BN(free))
+            .accounts({
+              config: configPda(),
+              market,
+              vault,
+              teamWallet: (await (chain.program.account as any).config.fetch(configPda())).teamWallet,
+              authority: chain.authority.publicKey,
+              systemProgram: SystemProgram.programId,
+            })
+            .rpc();
+        }
+      } catch (e) {
+        console.warn(
+          `[runs] reciclagem da run ${run.id.slice(0, 8)} falhou (não bloqueia): ${(e as Error).message}`
+        );
       }
 
       run.status = run.status === "awaiting_bet" ? "expired" : "settled";

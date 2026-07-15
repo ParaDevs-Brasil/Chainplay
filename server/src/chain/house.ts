@@ -132,34 +132,50 @@ export async function settleHouseMarket(marketId: string, outcome: number) {
   if (!chain) throw new HttpError(503, "chain desativada");
   const market = marketPda(new BN(marketId));
 
-  await chain.program.methods
-    .resolveMarket(outcome)
-    .accounts({
-      config: configPda(),
-      market,
-      authority: chain.authority.publicKey,
-    })
-    .rpc();
-
-  const acc: any = await (chain.program.account as any).market.fetch(market);
-  const vault = vaultPda(market);
-  const rentMin = await chain.connection.getMinimumBalanceForRentExemption(0);
-  const usable = (await chain.connection.getBalance(vault)) - rentMin;
-  const free = usable - (acc.outstanding as BN).toNumber();
-  if (free > 0) {
+  // Idempotência: tenta resolver e trata "mercado não está aberto" (6004) como
+  // já-resolvido — evita o loop de MarketNotOpen quando uma passada anterior
+  // resolveu mas falhou na reciclagem. Não decodifica o market antes (quebraria
+  // em markets de layout antiga durante upgrade do programa).
+  try {
     await chain.program.methods
-      .withdrawHouse(new BN(free))
+      .resolveMarket(outcome)
       .accounts({
         config: configPda(),
         market,
-        vault,
-        teamWallet: (
-          await (chain.program.account as any).config.fetch(configPda())
-        ).teamWallet,
         authority: chain.authority.publicKey,
-        systemProgram: SystemProgram.programId,
       })
       .rpc();
+  } catch (e) {
+    if (!/MarketNotOpen|6004/i.test((e as Error).message)) throw e;
+  }
+
+  // Reciclagem best-effort: falhar aqui não re-resolve nem trava a sessão.
+  let free = 0;
+  try {
+    const acc: any = await (chain.program.account as any).market.fetch(market);
+    const vault = vaultPda(market);
+    const rentMin = await chain.connection.getMinimumBalanceForRentExemption(0);
+    const usable = (await chain.connection.getBalance(vault)) - rentMin;
+    free = usable - (acc.outstanding as BN).toNumber();
+    if (free > 0) {
+      await chain.program.methods
+        .withdrawHouse(new BN(free))
+        .accounts({
+          config: configPda(),
+          market,
+          vault,
+          teamWallet: (
+            await (chain.program.account as any).config.fetch(configPda())
+          ).teamWallet,
+          authority: chain.authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+    }
+  } catch (e) {
+    console.warn(
+      `[house] reciclagem do mercado ${marketId} falhou (não bloqueia): ${(e as Error).message}`
+    );
   }
   return free;
 }
