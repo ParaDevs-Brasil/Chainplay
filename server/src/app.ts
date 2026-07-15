@@ -20,6 +20,8 @@ export function createApp(): express.Express {
   const app = express();
   // atrás de proxy (Vercel/nginx): confia no X-Forwarded-For pro rate limit por IP
   app.set("trust proxy", 1);
+  // não anuncia o framework (reduz fingerprinting da stack)
+  app.disable("x-powered-by");
   app.use(securityHeaders);
   app.use(cors(corsOptions()));
   app.use(rateLimiter());

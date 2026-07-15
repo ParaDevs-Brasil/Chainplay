@@ -71,6 +71,7 @@ export async function makePick(
   outcome: number,
   name?: string
 ) {
+  if (name) name = String(name).slice(0, 24); // cap: nome vem do body
   syncSurvivor();
   if (!wallet) throw new HttpError(400, "wallet obrigatória");
   if (![0, 1, 2].includes(outcome)) throw new HttpError(400, "outcome deve ser 0, 1 ou 2");

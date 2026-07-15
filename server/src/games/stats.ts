@@ -299,7 +299,7 @@ export async function submitPrediction(
   const record: PredictionRecord = {
     id: crypto.randomUUID(),
     wallet,
-    name,
+    name: name ? String(name).slice(0, 24) : name, // cap: nome vem do body
     matchId,
     guess,
     createdAt: Date.now(),

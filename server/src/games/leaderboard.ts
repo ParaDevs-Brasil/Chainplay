@@ -37,7 +37,9 @@ export function addPoints(
       entry = { wallet, points: 0, plays: 0, best: 0, updatedAt: 0 };
       board.push(entry);
     }
-    if (name) entry.name = name;
+    // nome vem do body de jogos grátis (sem sessão): limita a 24 chars pra não
+    // inflar o store/leaderboard nem quebrar o layout (React já escapa o HTML)
+    if (name) entry.name = String(name).slice(0, 24);
     entry.points += Math.max(0, Math.round(points));
     entry.plays += 1;
     entry.best = Math.max(entry.best, Math.round(points));

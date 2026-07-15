@@ -386,10 +386,25 @@ export interface MarketView extends MarketRecord {
   secondsToClose: number;
 }
 
+// Cache curto da listagem: /api/markets é chamada no load da home e faz um
+// getMultipleAccountsInfo na devnet (~330ms, cauda de ~1s). Sem cache, cada hit
+// = 1 chamada de RPC — sob carga isso amplifica load na devnet e degrada a UX.
+// 3s é bem menor que a granularidade útil dos pools (as apostas não mudam a %
+// visível a cada segundo).
+const LIST_CACHE_MS = 3_000;
+let listCache: { at: number; data: MarketView[] } | null = null;
+
 /** Mercados para o client: só jogos que ainda não começaram (feed em tempo
  *  real), lock mais próximo primeiro. Mercados demo só com DEMO_MARKETS=1;
  *  liquidados/anulados não aparecem aqui — resgate fica no Claim Center. */
 export async function listMarkets(): Promise<MarketView[]> {
+  if (listCache && Date.now() - listCache.at < LIST_CACHE_MS) return listCache.data;
+  const data = await computeMarkets();
+  listCache = { at: Date.now(), data };
+  return data;
+}
+
+async function computeMarkets(): Promise<MarketView[]> {
   const chain = getChain();
   const s = loadStore();
   const now = Math.floor(Date.now() / 1000);
