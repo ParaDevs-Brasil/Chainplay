@@ -48,3 +48,15 @@ export function asyncHandler(
     fn(req, res).catch(next);
   };
 }
+
+/**
+ * true quando a transação falhou porque a wallet da authority (a "casa") não
+ * tem SOL pra bancar o mercado — o revert vem como "insufficient lamports" na
+ * transferência do System program. Serve pra virar um 503 claro em vez de um
+ * 500 genérico ("a casa está sem saldo") nos fluxos que criam/fundeiam mercado.
+ */
+export function isHouseUnfundedError(err: unknown): boolean {
+  const e = err as { message?: string; logs?: string[] };
+  const hay = [e?.message ?? String(err), ...(e?.logs ?? [])].join(" ");
+  return /insufficient lamports|insufficient funds/i.test(hay);
+}

@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 // bn.js direto: o dist CJS do anchor não expõe BN como named export em Node ESM
 import BN from "bn.js";
 import { LAMPORTS_PER_SOL, SystemProgram } from "@solana/web3.js";
-import { HttpError } from "../http/errors.js";
+import { HttpError, isHouseUnfundedError } from "../http/errors.js";
 import {
   BPS,
   GAME_NONE,
@@ -74,37 +74,45 @@ export async function createHouseMarket(
   odds[HOUSE_LOSE] = new BN(BPS + 1); // exigido > 1x; ninguém aposta nele
 
   const games = await marketGames(chain.program, gameId);
-  await chain.program.methods
-    .createMarket(
-      marketId,
-      marketId,
-      { houseBacked: {} },
-      2,
-      odds,
-      new BN(closeTs),
-      new BN(resolveAfterTs),
-      games.gameId,
-      games.allowedGames
-    )
-    .accounts({
-      config: configPda(),
-      market,
-      vault,
-      authority: chain.authority.publicKey,
-      systemProgram: SystemProgram.programId,
-    })
-    .rpc();
+  try {
+    await chain.program.methods
+      .createMarket(
+        marketId,
+        marketId,
+        { houseBacked: {} },
+        2,
+        odds,
+        new BN(closeTs),
+        new BN(resolveAfterTs),
+        games.gameId,
+        games.allowedGames
+      )
+      .accounts({
+        config: configPda(),
+        market,
+        vault,
+        authority: chain.authority.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
 
-  await chain.program.methods
-    .fundHouse(new BN(Math.max(1, payout - net)))
-    .accounts({
-      config: configPda(),
-      market,
-      vault,
-      authority: chain.authority.publicKey,
-      systemProgram: SystemProgram.programId,
-    })
-    .rpc();
+    await chain.program.methods
+      .fundHouse(new BN(Math.max(1, payout - net)))
+      .accounts({
+        config: configPda(),
+        market,
+        vault,
+        authority: chain.authority.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+  } catch (err) {
+    // caixa da casa sem SOL pra bancar o pior caso da aposta → 503 claro
+    if (isHouseUnfundedError(err)) {
+      throw new HttpError(503, "a casa está sem saldo pra bancar apostas agora — tente mais tarde");
+    }
+    throw err;
+  }
 
   return {
     marketId: marketId.toString(),

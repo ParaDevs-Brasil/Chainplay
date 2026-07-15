@@ -13,7 +13,7 @@ import {
 import { userAddress, type UserRecord } from "../auth/store.js";
 import { DATA_DIR } from "../config.js";
 import { getGameData, type GameMatch } from "../games/matches.js";
-import { HttpError } from "../http/errors.js";
+import { HttpError, isHouseUnfundedError } from "../http/errors.js";
 import {
   BPS,
   GAME,
@@ -306,40 +306,48 @@ export async function createRun(
     chain.program,
     mode === "infinite" ? GAME.infinite : GAME.hilo
   );
-  await chain.program.methods
-    .createMarket(
-      marketId,
-      marketId, // fixture sintético = o próprio id da run
-      { houseBacked: {} },
-      2,
-      odds,
-      new BN(closeTs),
-      new BN(resolveAfterTs),
-      gameId,
-      allowedGames
-    )
-    .accounts({
-      config: configPda(),
-      market,
-      vault,
-      authority: chain.authority.publicKey,
-      systemProgram: SystemProgram.programId,
-    })
-    .rpc();
-
   // Cobre exatamente o pior caso: liability = payout, e o stake líquido do
   // jogador também entra no vault (payout - net é o que falta da casa).
   const fund = Math.max(1, payout - net);
-  await chain.program.methods
-    .fundHouse(new BN(fund))
-    .accounts({
-      config: configPda(),
-      market,
-      vault,
-      authority: chain.authority.publicKey,
-      systemProgram: SystemProgram.programId,
-    })
-    .rpc();
+  try {
+    await chain.program.methods
+      .createMarket(
+        marketId,
+        marketId, // fixture sintético = o próprio id da run
+        { houseBacked: {} },
+        2,
+        odds,
+        new BN(closeTs),
+        new BN(resolveAfterTs),
+        gameId,
+        allowedGames
+      )
+      .accounts({
+        config: configPda(),
+        market,
+        vault,
+        authority: chain.authority.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+
+    await chain.program.methods
+      .fundHouse(new BN(fund))
+      .accounts({
+        config: configPda(),
+        market,
+        vault,
+        authority: chain.authority.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+  } catch (err) {
+    // caixa da casa sem SOL pra bancar o pior caso da run → 503 claro
+    if (isHouseUnfundedError(err)) {
+      throw new HttpError(503, "a casa está sem saldo pra bancar apostas agora — tente mais tarde");
+    }
+    throw err;
+  }
 
   const run: RunRecord = {
     id: crypto.randomUUID(),
