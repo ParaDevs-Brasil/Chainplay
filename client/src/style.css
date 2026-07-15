@@ -11,6 +11,7 @@
   --text: #ffffff;
   --text-2: #d6d6d6;
   --muted: #9a9a9a;
+  --dim: #9aa4b2;
   --brand: #c6f04e;
   --brand-hover: #d4f66b;
   --brand-ink: #0b0b0d;
@@ -3055,4 +3056,713 @@ button.lo:hover:not(:disabled) {
     animation: none;
     transition: none;
   }
+}
+
+
+/* ===== CSS dos jogos restaurada (regressão do PR de landing #12) ===== */
+
+@keyframes stadium-breathe {
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.stats-strip {
+  display: flex;
+  gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.stats-strip > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 14px 30px;
+}
+
+.stats-strip > div + div {
+  border-left: 1px solid var(--border);
+}
+
+.stats-strip strong {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--brand);
+}
+
+.stats-strip span {
+  font-family: Inter, sans-serif;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 32px;
+  text-align: left;
+  border-top: 1px solid var(--border);
+  padding-top: 32px;
+}
+
+.footer-note {
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+@keyframes cta-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 162, 74, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(0, 162, 74, 0);
+  }
+}
+
+@media (max-width: 720px) {
+.stats-strip {
+    flex-wrap: wrap;
+  }
+.stats-strip > div {
+    padding: 12px 20px;
+  }
+.footer-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    text-align: center;
+  }
+}
+
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  width: 100%;
+  margin: 8px 0 24px;
+}
+
+.hub-card {
+  align-items: flex-start;
+  text-align: left;
+  gap: 10px;
+  padding: 20px;
+}
+
+.hub-card.hub-soon {
+  opacity: 0.65;
+}
+
+.hub-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.hub-art {
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.hub-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+}
+
+.hub-head strong {
+  font-size: 1.05rem;
+}
+
+.hub-desc {
+  color: var(--dim, #9aa4b2);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  margin: 0;
+  flex: 1;
+}
+
+.ticket-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 560px;
+  margin: 8px auto 20px;
+}
+
+.ticket-card {
+  align-items: stretch;
+  text-align: left;
+  gap: 10px;
+  padding: 16px 20px;
+}
+
+.ticket-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ticket-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 14px;
+  font-size: 0.82rem;
+  color: var(--dim, #9aa4b2);
+}
+
+.ticket-claimable {
+  border-color: rgba(94, 234, 143, 0.55);
+  box-shadow: 0 0 18px rgba(94, 234, 143, 0.12);
+}
+
+.ticket-lost {
+  opacity: 0.6;
+}
+
+.ticket-claimed {
+  opacity: 0.75;
+}
+
+.staked-config {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto 24px;
+}
+
+.staked-label {
+  font-size: 0.95rem;
+  margin: 6px 0 0;
+  color: var(--dim, #9aa4b2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.staked-label-inline {
+  color: var(--dim, #9aa4b2);
+  font-size: 0.85rem;
+}
+
+.target-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+.target-card {
+  cursor: pointer;
+  padding: 14px 8px;
+  gap: 4px;
+  min-height: 0;
+  justify-content: center;
+  transition: transform 0.12s, border-color 0.12s;
+}
+
+.target-card:hover {
+  transform: translateY(-2px);
+}
+
+.target-card.selected {
+  border-color: rgba(94, 234, 143, 0.7);
+  box-shadow: 0 0 16px rgba(94, 234, 143, 0.18);
+}
+
+.target-n {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.target-odds {
+  font-size: 0.78rem;
+  color: var(--dim, #9aa4b2);
+}
+
+.stake-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.center-row {
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.stake-chip {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.stake-chip.selected {
+  border-color: rgba(94, 234, 143, 0.7);
+  background: rgba(94, 234, 143, 0.08);
+}
+
+.potential {
+  font-size: 0.95rem;
+}
+
+.staked-cta {
+  min-width: 260px;
+}
+
+.devnet-note {
+  font-size: 0.75rem;
+}
+
+.lock-countdown {
+  font-size: 1.4rem;
+}
+
+.run-error {
+  max-width: 560px;
+  margin: 0 auto 12px;
+}
+
+.ghost-btn {
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  color: var(--dim, #9aa4b2);
+  border-radius: 10px;
+  padding: 8px 18px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.market-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto 24px;
+}
+
+.market-card {
+  align-items: stretch;
+  text-align: left;
+  gap: 12px;
+  padding: 18px 20px;
+}
+
+.market-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.market-head em {
+  color: var(--dim, #9aa4b2);
+  font-style: normal;
+  font-size: 0.85rem;
+}
+
+.outcome-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.outcome-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 0.12s, transform 0.12s;
+}
+
+.outcome-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: rgba(94, 234, 143, 0.5);
+}
+
+.outcome-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.outcome-btn.winner {
+  border-color: gold;
+}
+
+.outcome-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.outcome-pct {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.outcome-btn small {
+  color: var(--dim, #9aa4b2);
+  font-size: 0.7rem;
+}
+
+.market-foot {
+  font-size: 0.8rem;
+  color: var(--dim, #9aa4b2);
+}
+
+.market-ok {
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.hub-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 560px) {
+.outcome-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.login-panel {
+  max-width: 480px;
+  margin: 0 auto 20px;
+}
+
+.login-options {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.google-btn-slot {
+  min-height: 44px;
+  display: flex;
+  justify-content: center;
+}
+
+.login-hint {
+  font-size: 0.75rem;
+  max-width: 420px;
+  margin: 10px auto 0;
+}
+
+.login-error {
+  margin-top: 10px;
+}
+
+.custodial-info {
+  font-size: 0.75rem;
+  max-width: 520px;
+  word-break: break-all;
+}
+
+.ladder-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 8px 0 12px;
+}
+
+.ladder-rung {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.8rem;
+  color: var(--mint);
+}
+
+.cashout-cta {
+  display: block;
+  margin: 16px auto 6px;
+  font-size: 1.05rem;
+  animation: cashout-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes cashout-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+.cashout-cta { animation: none; }
+}
+
+.lb-card {
+  max-width: 560px;
+  margin: 24px auto;
+  padding: 16px 20px;
+}
+
+.lb-title {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.lb-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lb-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.lb-row.lb-you {
+  background: var(--surface-2);
+  outline: 1px solid var(--mint);
+}
+
+.lb-rank { color: var(--muted); min-width: 2.4em; }
+
+.lb-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.lb-name em { color: var(--mint); font-style: normal; }
+
+.lb-pts { color: var(--amber); }
+
+.stat-steppers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.stat-stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 4px;
+}
+
+.stepper button {
+  min-width: 40px;
+  padding: 6px 0;
+  font-size: 1rem;
+}
+
+.stepper b { font-size: 1.05rem; }
+
+.xray {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+  font-size: 0.8rem;
+}
+
+.xray-head, .xray-row {
+  display: grid;
+  grid-template-columns: 1fr 60px 60px 50px;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.xray-head em { color: var(--muted); font-style: normal; font-size: 0.7rem; }
+
+.xray-row i { color: var(--muted); font-style: normal; }
+
+.xray-row b { text-align: center; }
+
+.xray-pts { color: var(--mint); }
+
+.survivor-status { margin-bottom: 12px; }
+
+.pick-row {
+  flex-direction: row;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 16px;
+}
+
+.pick-survived { color: var(--mint); border-color: var(--mint); }
+
+.pick-eliminated { color: var(--red); border-color: var(--red); }
+
+.arcade-card {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 20px 24px;
+  text-align: center;
+}
+
+.arcade-event { margin: 0 0 6px; color: var(--muted); font-size: 0.9rem; }
+
+.arcade-question { margin: 0 0 14px; font-size: 1.3rem; }
+
+.arcade-timer {
+  /* o .card base centraliza (align-items) e encolheria a barra pra largura 0 */
+  align-self: stretch;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.arcade-timer-fill {
+  height: 100%;
+  background: var(--mint);
+  transition: width 0.1s linear;
+}
+
+.arcade-timer.urgent .arcade-timer-fill { background: var(--red); }
+
+.arcade-buttons { justify-content: center; }
+
+.arcade-result { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+
+.arcade-verdict { font-size: 1.2rem; font-weight: 700; margin: 0; }
+
+.quiz-clues {
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 16px;
+  margin: 0 0 16px;
+  text-align: left;
+}
+
+.quiz-clue {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.quiz-clue dt { color: var(--muted); font-size: 0.82rem; }
+
+.quiz-clue dd { margin: 0; font-weight: 600; }
+
+.quiz-options {
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.quiz-option {
+  padding: 12px 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.1s ease;
+}
+
+.quiz-option:hover { border-color: var(--mint); transform: translateY(-1px); }
+
+@media (max-width: 480px) {
+.quiz-clues,
+  .quiz-options { grid-template-columns: 1fr; }
+}
+
+.howto {
+  max-width: 640px;
+  margin: 0 auto 18px;
+  padding: 12px 18px;
+  text-align: left;
+  /* o .card base é flex com min-height pros cards de jogo — aqui não */
+  display: block;
+  min-height: 0;
+}
+
+.howto summary {
+  cursor: pointer;
+  font-weight: 600;
+  list-style-position: inside;
+}
+
+.howto-steps {
+  margin: 12px 0 8px;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.howto-profit {
+  margin: 8px 0 4px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+.howto-profit b { color: var(--amber); }
+
+.bucket-label {
+  margin-top: 14px;
+}
+
+/* nota didática do colecionável NFT na tela de aposta (Live/Team valendo SOL) */
+.nft-note {
+  font-size: 0.82rem;
+  margin: 4px 0 2px;
+  color: var(--mint);
 }
