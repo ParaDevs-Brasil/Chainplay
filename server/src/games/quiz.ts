@@ -127,6 +127,39 @@ export async function startQuiz(wallet: string, name?: string) {
   return roundView(s);
 }
 
+/* ---- rodadas para a sessão valendo SOL (Guess the Team house-backed) ---- */
+// A sessão apostada (teamSession.ts) usa estas rodadas avulsas: o segredo (time
+// certo) fica só aqui e a checagem é server-side, igual à regra das runs.
+interface StakedRound {
+  answer: string;
+  opponent: string;
+  options: string[];
+  expiresAt: number;
+}
+const stakedRounds = new Map<string, StakedRound>();
+
+export async function buildStakedRound() {
+  const matches = (await getGameData()).matches;
+  const r = buildRound(matches, new Set());
+  const id = crypto.randomUUID();
+  const expiresAt = Date.now() + ROUND_WINDOW_MS;
+  stakedRounds.set(id, { answer: r.answer, opponent: r.opponent, options: r.options, expiresAt });
+  // poda rodadas velhas
+  const now = Date.now();
+  for (const [k, v] of stakedRounds) if (now > v.expiresAt + 60_000) stakedRounds.delete(k);
+  return { id, options: r.options, clues: r.clues, expiresAt };
+}
+
+/** Confere a rodada apostada. `choice` é o índice da opção escolhida. */
+export function checkStakedRound(id: string, choice: number) {
+  const r = stakedRounds.get(id);
+  if (!r) throw new HttpError(404, "rodada não encontrada");
+  stakedRounds.delete(id); // one-shot
+  const late = Date.now() > r.expiresAt;
+  const correct = !late && r.options[choice] === r.answer;
+  return { correct, late, answer: r.answer, opponent: r.opponent };
+}
+
 export function answerQuiz(id: string, choice: string) {
   const s = sessions.get(id);
   if (!s || s.finished) throw new HttpError(404, "quiz não encontrado (ou já terminou)");

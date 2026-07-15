@@ -1,9 +1,11 @@
 import { getChain } from "./chain/client.js";
 import { settleFixtureMarkets, syncMarkets } from "./chain/markets.js";
 import { settleRuns } from "./chain/runs.js";
+import { liveSession } from "./games/liveSession.js";
 import { settlePenaltySessions } from "./games/penaltySession.js";
 import { syncStatsGame } from "./games/stats.js";
 import { syncSurvivor } from "./games/survivor.js";
+import { teamSession } from "./games/teamSession.js";
 
 /**
  * Crons on-chain (só no server standalone — na Vercel não há processo
@@ -36,6 +38,8 @@ export function startCrons(): () => void {
       await settleRuns();
       await settleFixtureMarkets();
       await settlePenaltySessions();
+      await liveSession.settle();
+      await teamSession.settle();
       // off-chain e baratos: liquida palpites de stats e picks do survivor
       await syncStatsGame();
       syncSurvivor();

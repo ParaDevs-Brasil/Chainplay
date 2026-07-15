@@ -13,10 +13,19 @@ import {
 } from "../../games/penaltySession.js";
 import { getChain } from "../../chain/client.js";
 import { userAddress } from "../../auth/store.js";
+import { liveSession } from "../../games/liveSession.js";
+import { registerSessionRoutes } from "../sessionRoutes.js";
 import { HttpError, asyncHandler } from "../errors.js";
 import { requireChain, requireSession, type AuthedRequest } from "../middleware.js";
 
 export const arcadeRoutes = Router();
+
+// Live Challenge valendo SOL: sessão house-backed de 8 desafios com NFT do LIVE.
+// Sub-router em /live/session* — o modo grátis (/live/next|leaderboard) segue
+// pelas rotas /:game abaixo.
+const liveRouter = Router();
+registerSessionRoutes(liveRouter, liveSession);
+arcadeRoutes.use("/live", liveRouter);
 
 function gameParam(raw: string): ArcadeGame {
   if (raw !== "penalty" && raw !== "live") {

@@ -6,6 +6,7 @@ import { api } from "./chain/http";
 import { formatSol, type PlacedBet } from "./chain/oddies";
 import HowTo from "./components/HowTo";
 import Leaderboard from "./components/Leaderboard";
+import StakedSession from "./components/StakedSession";
 import { celebrateCorrect, celebrateWin } from "./celebration";
 import { playSfx } from "./sfx";
 import { teamFlag } from "./flags";
@@ -43,6 +44,7 @@ export default function Arcade({ game }: { game: ArcadeGame }) {
   const account = useAccount();
   const accountCta = useAccountCta();
   const texts = game === "penalty" ? t.arcade.penalty : t.arcade.live;
+  const sess = game === "penalty" ? t.penaltySession : t.liveSession;
   const [tab, setTab] = useState<"free" | "staked">("free");
 
   const [event, setEvent] = useState<ArcadeEvent | null>(null);
@@ -156,26 +158,81 @@ export default function Arcade({ game }: { game: ArcadeGame }) {
         {error && <p className="dim center run-error">⚠️ {error}</p>}
         {!account.address && <LoginPanel note={t.arcade.connectFirst} />}
 
-        {/* penalty tem os dois modos; live segue só no grátis */}
-        {game === "penalty" && account.address && (
+        {/* penalty e live têm os dois modos (grátis + valendo SOL) */}
+        {account.address && (
           <div className="stake-row center-row">
             <button
               className={`stake-chip ${tab === "free" ? "selected" : ""}`}
               onClick={() => setTab("free")}
             >
-              {t.penaltySession.freeTab}
+              {sess.freeTab}
             </button>
             <button
               className={`stake-chip ${tab === "staked" ? "selected" : ""}`}
               onClick={() => setTab("staked")}
             >
-              {t.penaltySession.stakedTab}
+              {sess.stakedTab}
             </button>
           </div>
         )}
 
-        {tab === "staked" && game === "penalty" && account.address && (
-          <StakedPenalty />
+        {tab === "staked" && game === "penalty" && account.address && <StakedPenalty />}
+
+        {tab === "staked" && game === "live" && account.address && (
+          <StakedSession
+            apiBase="/api/arcade/live"
+            labels={{
+              chooseTarget: t.liveSession.chooseTarget,
+              targetLabel: t.liveSession.targetLabel,
+              start: t.liveSession.start,
+              creating: t.liveSession.creating,
+              wonTitle: t.liveSession.wonTitle,
+              lostTitle: t.liveSession.lostTitle,
+              progress: t.liveSession.progress,
+              nftNote: t.liveSession.nftNote,
+            }}
+            renderChallenge={({ event, outcome, answer, next, timerPct }) =>
+              event && !outcome ? (
+                <>
+                  <p className="arcade-event">
+                    <span aria-hidden="true">{teamFlag(event.home)}</span>{" "}
+                    {t.arcade.live.event(event.home, event.away, event.minute)}{" "}
+                    <span aria-hidden="true">{teamFlag(event.away)}</span>
+                  </p>
+                  <h2 className="arcade-question">{t.arcade.questions[event.kind as "nextGoal"]}</h2>
+                  <div
+                    className={`arcade-timer ${timerPct < 35 ? "urgent" : ""}`}
+                    role="timer"
+                  >
+                    <div className="arcade-timer-fill" style={{ width: `${timerPct}%` }} />
+                  </div>
+                  <div className="guess-buttons arcade-buttons">
+                    <button className="hi" onClick={() => answer(0)}>
+                      {t.arcade.live.optA}
+                    </button>
+                    <button className="lo" onClick={() => answer(1)}>
+                      {t.arcade.live.optB}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="arcade-result">
+                  {outcome && (
+                    <p className={`arcade-verdict ${outcome.correct ? "ok" : "bad"}`}>
+                      {outcome.late
+                        ? t.arcade.tooLate
+                        : outcome.correct
+                        ? t.arcade.hit(outcome.points ?? 0)
+                        : t.arcade.miss}
+                    </p>
+                  )}
+                  <button className="primary" onClick={next}>
+                    {t.arcade.next}
+                  </button>
+                </div>
+              )
+            }
+          />
         )}
 
         {tab === "free" && account.address && !event && (

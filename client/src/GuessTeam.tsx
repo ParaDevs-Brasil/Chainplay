@@ -5,6 +5,7 @@ import { LoginPanel, useAccount, useAccountCta } from "./chain/account";
 import { api } from "./chain/http";
 import HowTo from "./components/HowTo";
 import Leaderboard from "./components/Leaderboard";
+import StakedSession from "./components/StakedSession";
 import { celebrateCorrect, celebrateWin } from "./celebration";
 import { playSfx } from "./sfx";
 import { teamFlag } from "./flags";
@@ -48,6 +49,7 @@ export default function GuessTeam() {
   const account = useAccount();
   const accountCta = useAccountCta();
 
+  const [tab, setTab] = useState<"free" | "staked">("free");
   const [round, setRound] = useState<RoundView | null>(null);
   const [outcome, setOutcome] = useState<AnswerView | null>(null);
   const [busy, setBusy] = useState(false);
@@ -157,7 +159,75 @@ export default function GuessTeam() {
         {error && <p className="dim center run-error">⚠️ {error}</p>}
         {!account.address && <LoginPanel note={t.quiz.connectFirst} />}
 
-        {account.address && !round && (
+        {/* grátis (ranking) x valendo SOL */}
+        {account.address && (
+          <div className="stake-row center-row">
+            <button
+              className={`stake-chip ${tab === "free" ? "selected" : ""}`}
+              onClick={() => setTab("free")}
+            >
+              {t.teamSession.freeTab}
+            </button>
+            <button
+              className={`stake-chip ${tab === "staked" ? "selected" : ""}`}
+              onClick={() => setTab("staked")}
+            >
+              {t.teamSession.stakedTab}
+            </button>
+          </div>
+        )}
+
+        {/* ---------- valendo SOL: sessão house-backed de 5 rodadas ---------- */}
+        {tab === "staked" && account.address && (
+          <StakedSession
+            apiBase="/api/quiz/staked"
+            labels={{
+              chooseTarget: t.teamSession.chooseTarget,
+              targetLabel: t.teamSession.targetLabel,
+              start: t.teamSession.start,
+              creating: t.teamSession.creating,
+              wonTitle: t.teamSession.wonTitle,
+              lostTitle: t.teamSession.lostTitle,
+              progress: t.teamSession.progress,
+              nftNote: t.teamSession.nftNote,
+            }}
+            renderChallenge={({ event, outcome: out, answer, next, timerPct }) =>
+              event && !out ? (
+                <>
+                  <h2 className="arcade-question">{t.teamSession.whoPlayed}</h2>
+                  <div className={`arcade-timer ${timerPct < 35 ? "urgent" : ""}`} role="timer">
+                    <div className="arcade-timer-fill" style={{ width: `${timerPct}%` }} />
+                  </div>
+                  <ClueGrid clues={event.clues} labels={t.quiz.clues} />
+                  <div className="quiz-options">
+                    {(event.options as string[]).map((team, i) => (
+                      <button key={team} className="quiz-option" onClick={() => answer(i)}>
+                        <span aria-hidden="true">{teamFlag(team)}</span> {team}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="arcade-result">
+                  {out && (
+                    <p className={`arcade-verdict ${out.correct ? "ok" : "bad"}`}>
+                      {out.late
+                        ? t.quiz.tooLate
+                        : out.correct
+                        ? t.quiz.hit(20)
+                        : t.teamSession.wasTeam(out.answer, out.opponent)}
+                    </p>
+                  )}
+                  <button className="primary" onClick={next}>
+                    {t.quiz.next}
+                  </button>
+                </div>
+              )
+            }
+          />
+        )}
+
+        {tab === "free" && account.address && !round && (
           <div className="endgame">
             <button className="primary staked-cta" disabled={busy} onClick={start}>
               {t.quiz.start}
@@ -165,7 +235,7 @@ export default function GuessTeam() {
           </div>
         )}
 
-        {round && (
+        {tab === "free" && round && (
           <div className="card arcade-card">
             <p className="mono center dim">
               {t.quiz.roundLabel(round.round, round.totalRounds)} ·{" "}
@@ -183,34 +253,7 @@ export default function GuessTeam() {
                   <div className="arcade-timer-fill" style={{ width: `${pct}%` }} />
                 </div>
 
-                <dl className="quiz-clues">
-                  {round.clues.stage && (
-                    <div className="quiz-clue">
-                      <dt>{clueLabels.stage}</dt>
-                      <dd>{round.clues.stage}</dd>
-                    </div>
-                  )}
-                  <div className="quiz-clue">
-                    <dt>{clueLabels.goalsFor}</dt>
-                    <dd className="mono">{round.clues.goalsFor}</dd>
-                  </div>
-                  <div className="quiz-clue">
-                    <dt>{clueLabels.goalsAgainst}</dt>
-                    <dd className="mono">{round.clues.goalsAgainst}</dd>
-                  </div>
-                  <div className="quiz-clue">
-                    <dt>{clueLabels.corners}</dt>
-                    <dd className="mono">{round.clues.corners}</dd>
-                  </div>
-                  <div className="quiz-clue">
-                    <dt>{clueLabels.yellowCards}</dt>
-                    <dd className="mono">{round.clues.yellowCards}</dd>
-                  </div>
-                  <div className="quiz-clue">
-                    <dt>{clueLabels.possession}</dt>
-                    <dd className="mono">{round.clues.possession}%</dd>
-                  </div>
-                </dl>
+                <ClueGrid clues={round.clues} labels={clueLabels} />
 
                 <div className="quiz-options">
                   {round.options.map((team) => (
@@ -262,5 +305,45 @@ export default function GuessTeam() {
         <footer>{t.game.gameFooter}</footer>
       </div>
     </div>
+  );
+}
+
+/** Raio-X estatístico da seleção (pistas) — reusado no modo grátis e no apostado. */
+function ClueGrid({
+  clues,
+  labels,
+}: {
+  clues: RoundView["clues"];
+  labels: ReturnType<typeof useLang>["t"]["quiz"]["clues"];
+}) {
+  return (
+    <dl className="quiz-clues">
+      {clues.stage && (
+        <div className="quiz-clue">
+          <dt>{labels.stage}</dt>
+          <dd>{clues.stage}</dd>
+        </div>
+      )}
+      <div className="quiz-clue">
+        <dt>{labels.goalsFor}</dt>
+        <dd className="mono">{clues.goalsFor}</dd>
+      </div>
+      <div className="quiz-clue">
+        <dt>{labels.goalsAgainst}</dt>
+        <dd className="mono">{clues.goalsAgainst}</dd>
+      </div>
+      <div className="quiz-clue">
+        <dt>{labels.corners}</dt>
+        <dd className="mono">{clues.corners}</dd>
+      </div>
+      <div className="quiz-clue">
+        <dt>{labels.yellowCards}</dt>
+        <dd className="mono">{clues.yellowCards}</dd>
+      </div>
+      <div className="quiz-clue">
+        <dt>{labels.possession}</dt>
+        <dd className="mono">{clues.possession}%</dd>
+      </div>
+    </dl>
   );
 }

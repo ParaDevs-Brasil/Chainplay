@@ -952,6 +952,37 @@ const pt = {
     lostSub: "O stake fica com a casa. Bora de novo?",
     resume: "Sessão em andamento retomada.",
   },
+
+  liveSession: {
+    freeTab: "🎮 Grátis (ranking)",
+    stakedTab: "💰 Valendo SOL",
+    chooseTarget: "Meta de acertos nos 8 desafios",
+    targetLabel: (n: number) => `${n} de 8`,
+    start: "⚡ Criar sessão apostada",
+    creating: "Criando mercado on-chain…",
+    progress: (hits: number, total: number, target: number, rounds: number) =>
+      `desafio ${Math.min(rounds + 1, total)} de ${total} · ${hits} acerto(s) · faltam ${Math.max(0, target - hits)}`,
+    wonTitle: "🏆 Meta batida!",
+    lostTitle: "💀 Meta perdida!",
+    nftNote: "cada sessão emite a NFT de identidade do Live Challenge na sua carteira.",
+    question: "Vai acontecer nos próximos minutos?",
+  },
+
+  teamSession: {
+    freeTab: "🎮 Grátis (ranking)",
+    stakedTab: "💰 Valendo SOL",
+    chooseTarget: "Meta de acertos nas 5 rodadas",
+    targetLabel: (n: number) => `${n} de 5`,
+    start: "🕵️ Criar sessão apostada",
+    creating: "Criando mercado on-chain…",
+    progress: (hits: number, total: number, target: number, rounds: number) =>
+      `rodada ${Math.min(rounds + 1, total)} de ${total} · ${hits} acerto(s) · faltam ${Math.max(0, target - hits)}`,
+    wonTitle: "🏆 Meta batida!",
+    lostTitle: "💀 Meta perdida!",
+    nftNote: "cada sessão emite a NFT de identidade do Guess the Team na sua carteira.",
+    whoPlayed: "Quem jogou assim?",
+    wasTeam: (team: string, opp: string) => `Era ${team} (contra ${opp})!`,
+  },
 };
 
 export type Dict = typeof pt;
@@ -1899,6 +1930,37 @@ const en: Dict = {
     lostTitle: "💀 Target missed!",
     lostSub: "The stake stays with the house. Run it back?",
     resume: "Ongoing session resumed.",
+  },
+
+  liveSession: {
+    freeTab: "🎮 Free (ranking)",
+    stakedTab: "💰 Staked",
+    chooseTarget: "Hit target across the 8 challenges",
+    targetLabel: (n: number) => `${n} of 8`,
+    start: "⚡ Create staked session",
+    creating: "Creating on-chain market…",
+    progress: (hits: number, total: number, target: number, rounds: number) =>
+      `challenge ${Math.min(rounds + 1, total)} of ${total} · ${hits} hit(s) · ${Math.max(0, target - hits)} to go`,
+    wonTitle: "🏆 Target hit!",
+    lostTitle: "💀 Target missed!",
+    nftNote: "each session mints the Live Challenge identity NFT to your wallet.",
+    question: "Will it happen in the next minutes?",
+  },
+
+  teamSession: {
+    freeTab: "🎮 Free (ranking)",
+    stakedTab: "💰 Staked",
+    chooseTarget: "Hit target across the 5 rounds",
+    targetLabel: (n: number) => `${n} of 5`,
+    start: "🕵️ Create staked session",
+    creating: "Creating on-chain market…",
+    progress: (hits: number, total: number, target: number, rounds: number) =>
+      `round ${Math.min(rounds + 1, total)} of ${total} · ${hits} hit(s) · ${Math.max(0, target - hits)} to go`,
+    wonTitle: "🏆 Target hit!",
+    lostTitle: "💀 Target missed!",
+    nftNote: "each session mints the Guess the Team identity NFT to your wallet.",
+    whoPlayed: "Who played like this?",
+    wasTeam: (team: string, opp: string) => `It was ${team} (vs ${opp})!`,
   },
 };
 
