@@ -73,24 +73,24 @@ const pt = {
   showcase: {
     title: "Cada partida. Um novo jeito de vencer.",
     sub: "Pare de assistir. Comece a competir. A ChainPlay transforma partidas e estatísticas reais no seu próximo desafio.",
-    testimonials: [
+    games: [
       {
-        quote:
-          "Eu já assistia a todos os jogos da Copa — agora cada palpite vale pontos. Emendei 14 acertos seguidos no Hi-Lo e não consigo mais parar.",
-        name: "Rafael Nogueira",
-        designation: "Torcedor e streaker do ranking",
+        title: "Infinite Hi-Lo",
+        tagline: "Solo · Sequência infinita",
+        description:
+          "Uma evolução do Hi-Lo tradicional que alterna automaticamente diferentes tipos de estatísticas, como gols, escanteios, posse de bola, cartões, finalizações e faltas. Essa variação impede que as partidas se tornem repetitivas e aumenta a dificuldade conforme a sequência cresce. O jogador deve manter o maior número possível de acertos consecutivos para alcançar posições de destaque no ranking global.",
       },
       {
-        quote:
-          "As estatísticas são reais e verificáveis on-chain. Dá pra confiar que o resultado saiu direto da partida, sem casa mexendo nos números.",
-        name: "Camila Duarte",
-        designation: "Analista de dados esportivos",
+        title: "1X2 Markets",
+        tagline: "Multiplayer · Pote on-chain",
+        description:
+          "O jogo multiplayer on-chain do ChainPlay onde você aposta no resultado de partidas reais da Copa do Mundo de 2026. Diferente das apostas com odds fixas, todas as apostas entram em um único pote compartilhado, e o prêmio é dividido proporcionalmente entre quem acertar o resultado. As porcentagens exibidas representam como a comunidade está distribuindo suas apostas em tempo real.",
       },
       {
-        quote:
-          "Montei um bolão com a galera usando regras próprias. Em minutos todo mundo estava competindo na mesma tabela. Simples e viciante.",
-        name: "Diego Martins",
-        designation: "Criador de bolão na ChainPlay",
+        title: "Penalty Predictor",
+        tagline: "Ao vivo · Momentos de pênalti",
+        description:
+          "Sempre que uma cobrança de pênalti acontecer durante a Copa, o jogador terá poucos segundos para prever se a cobrança será convertida ou defendida. Após a conclusão da jogada, a API confirma o resultado e a pontuação é distribuída automaticamente. Sequências de acertos aumentam multiplicadores de pontos e desbloqueiam recompensas especiais. O modo transforma momentos decisivos da partida em desafios rápidos e emocionantes.",
       },
     ],
   },
@@ -1075,24 +1075,24 @@ const en: Dict = {
   showcase: {
     title: "Every match. A new way to win.",
     sub: "Stop watching. Start competing. ChainPlay turns real matches and stats into your next challenge.",
-    testimonials: [
+    games: [
       {
-        quote:
-          "I already watched every World Cup match — now every guess is worth points. I hit a 14-round Hi-Lo streak and I can't put it down.",
-        name: "Rafael Nogueira",
-        designation: "Fan & leaderboard streaker",
+        title: "Infinite Hi-Lo",
+        tagline: "Solo · Endless streak",
+        description:
+          "An evolution of classic Hi-Lo that automatically rotates between different stats — goals, corners, possession, cards, shots and fouls. It keeps rounds from feeling repetitive and ramps up the difficulty as your streak grows. Keep as many correct calls in a row as you can to climb the global leaderboard.",
       },
       {
-        quote:
-          "The stats are real and verifiable on-chain. I trust the result came straight from the match, with no house touching the numbers.",
-        name: "Camila Duarte",
-        designation: "Sports data analyst",
+        title: "1X2 Markets",
+        tagline: "Multiplayer · On-chain pool",
+        description:
+          "ChainPlay's on-chain multiplayer game where you bet on the outcome of real 2026 World Cup matches. Unlike fixed-odds betting, every stake goes into a single shared pool, split proportionally among everyone who calls the result right. The live percentages show how the community is spreading its bets in real time.",
       },
       {
-        quote:
-          "I set up a pool with friends using our own rules. Within minutes everyone was competing on the same board. Simple and addictive.",
-        name: "Diego Martins",
-        designation: "ChainPlay pool creator",
+        title: "Penalty Predictor",
+        tagline: "Live · Penalty moments",
+        description:
+          "Whenever a penalty is taken during the World Cup, you get a few seconds to predict whether it's scored or saved. Once the play ends, the API confirms the result and points are paid out automatically. Streaks raise your score multipliers and unlock special rewards, turning the match's decisive moments into fast, thrilling challenges.",
       },
     ],
   },

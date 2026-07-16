@@ -7,14 +7,13 @@ import HowItWorksSection from "./HowItWorksSection";
 import { CircularTestimonials } from "@/components/ui/circular-testimonials";
 import heroCharacter from "./assets/chameleon1.png";
 import chainplayLogo from "./assets/chainplay-logo.png";
+import infiniteHiloArt from "./assets/games/infinite-hilo.jpeg";
+import markets1x2Art from "./assets/games/1x2-markets.png";
+import penaltyPredictorArt from "./assets/games/penalty-predictor.jpeg";
 
-/* imagens do carrossel de depoimentos (showcase) — URLs estáveis do Unsplash;
-   trocar por assets próprios quando existirem (fotos de jogadores/torcida). */
-const SHOWCASE_IMAGES = [
-  "https://images.unsplash.com/photo-1512316609839-ce289d3eba0a?q=80&w=1368&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1628749528992-f5702133b686?q=80&w=1368&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1524267213992-b76e8577d046?q=80&w=1368&auto=format&fit=crop",
-];
+/* artes dos jogos exibidos no carrossel do showcase, na mesma ordem do array
+   showcase.games do i18n (Infinite Hi-Lo, 1X2 Markets, Penalty Predictor). */
+const SHOWCASE_IMAGES = [infiniteHiloArt, markets1x2Art, penaltyPredictorArt];
 
 /* ---------- teaser jogável do hero ---------- */
 
@@ -481,8 +480,10 @@ export default function Landing() {
         <p className="showcase-sub">{t.showcase.sub}</p>
         <div className="showcase-testimonials">
           <CircularTestimonials
-            testimonials={t.showcase.testimonials.map((item, i) => ({
-              ...item,
+            testimonials={t.showcase.games.map((game, i) => ({
+              quote: game.description,
+              name: game.title,
+              designation: game.tagline,
               src: SHOWCASE_IMAGES[i % SHOWCASE_IMAGES.length],
             }))}
             autoplay={true}
