@@ -430,6 +430,19 @@ footer a:hover {
      para o mascote poder invadir as margens laterais em telas largas */
 }
 
+/* fundo da landing: estádio de futebol, fixo e sutil, com overlay escuro
+   controlando a opacidade pra não competir com o conteúdo; z-index negativo
+   mantém tudo clicável. (O hub de jogos usa background.jpg.jpeg à parte.) */
+.landing::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(rgba(11, 11, 13, 0.86), rgba(11, 11, 13, 0.94)),
+    url("/imgs/landing-bg.avif") center / cover no-repeat fixed;
+  pointer-events: none;
+}
+
 .topbar {
   position: sticky;
   top: 0;
