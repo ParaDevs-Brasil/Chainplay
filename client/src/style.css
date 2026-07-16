@@ -2682,6 +2682,17 @@ button.lo:hover:not(:disabled) {
   }
 }
 
+/* carrossel de depoimentos (CircularTestimonials) dentro do showcase */
+.showcase-testimonials {
+  display: flex;
+  justify-content: center;
+  margin-top: clamp(8px, 2vw, 20px);
+}
+
+.showcase-testimonials .testimonial-container {
+  max-width: 64rem;
+}
+
 /* ---------- seção 3: vantagens do jogador ---------- */
 
 .advantages {

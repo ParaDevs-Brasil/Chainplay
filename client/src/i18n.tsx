@@ -73,10 +73,25 @@ const pt = {
   showcase: {
     title: "Cada partida. Um novo jeito de vencer.",
     sub: "Pare de assistir. Comece a competir. A ChainPlay transforma partidas e estatísticas reais no seu próximo desafio.",
-    cards: [
-      { asset: "matchPreviewImage", label: "Prévia da partida" },
-      { asset: "predictionGameGif", label: "Jogo de previsão" },
-      { asset: "challengeCardImage", label: "Card de desafio" },
+    testimonials: [
+      {
+        quote:
+          "Eu já assistia a todos os jogos da Copa — agora cada palpite vale pontos. Emendei 14 acertos seguidos no Hi-Lo e não consigo mais parar.",
+        name: "Rafael Nogueira",
+        designation: "Torcedor e streaker do ranking",
+      },
+      {
+        quote:
+          "As estatísticas são reais e verificáveis on-chain. Dá pra confiar que o resultado saiu direto da partida, sem casa mexendo nos números.",
+        name: "Camila Duarte",
+        designation: "Analista de dados esportivos",
+      },
+      {
+        quote:
+          "Montei um bolão com a galera usando regras próprias. Em minutos todo mundo estava competindo na mesma tabela. Simples e viciante.",
+        name: "Diego Martins",
+        designation: "Criador de bolão na ChainPlay",
+      },
     ],
   },
 
@@ -1060,10 +1075,25 @@ const en: Dict = {
   showcase: {
     title: "Every match. A new way to win.",
     sub: "Stop watching. Start competing. ChainPlay turns real matches and stats into your next challenge.",
-    cards: [
-      { asset: "matchPreviewImage", label: "Match preview" },
-      { asset: "predictionGameGif", label: "Prediction game" },
-      { asset: "challengeCardImage", label: "Challenge card" },
+    testimonials: [
+      {
+        quote:
+          "I already watched every World Cup match — now every guess is worth points. I hit a 14-round Hi-Lo streak and I can't put it down.",
+        name: "Rafael Nogueira",
+        designation: "Fan & leaderboard streaker",
+      },
+      {
+        quote:
+          "The stats are real and verifiable on-chain. I trust the result came straight from the match, with no house touching the numbers.",
+        name: "Camila Duarte",
+        designation: "Sports data analyst",
+      },
+      {
+        quote:
+          "I set up a pool with friends using our own rules. Within minutes everyone was competing on the same board. Simple and addictive.",
+        name: "Diego Martins",
+        designation: "ChainPlay pool creator",
+      },
     ],
   },
 

@@ -4,8 +4,17 @@ import { celebrateCorrect } from "./celebration";
 import Navbar from "./Navbar";
 import PlayerAdvantageSection from "./PlayerAdvantageSection";
 import HowItWorksSection from "./HowItWorksSection";
+import { CircularTestimonials } from "@/components/ui/circular-testimonials";
 import heroCharacter from "./assets/chameleon1.png";
 import chainplayLogo from "./assets/chainplay-logo.png";
+
+/* imagens do carrossel de depoimentos (showcase) — URLs estáveis do Unsplash;
+   trocar por assets próprios quando existirem (fotos de jogadores/torcida). */
+const SHOWCASE_IMAGES = [
+  "https://images.unsplash.com/photo-1512316609839-ce289d3eba0a?q=80&w=1368&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1628749528992-f5702133b686?q=80&w=1368&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1524267213992-b76e8577d046?q=80&w=1368&auto=format&fit=crop",
+];
 
 /* ---------- teaser jogável do hero ---------- */
 
@@ -470,20 +479,27 @@ export default function Landing() {
       <section className="showcase reveal" id="minigames">
         <h2 className="showcase-title">{t.showcase.title}</h2>
         <p className="showcase-sub">{t.showcase.sub}</p>
-        <div className="showcase-cards">
-          {t.showcase.cards.map((c) => (
-            <div
-              className="showcase-card"
-              key={c.asset}
-              role="img"
-              aria-label={`${c.label} (em breve)`}
-            >
-              {/* {c.asset}: placeholder — trocar por
-                  <img className="showcase-card-img" src={...} alt="..." />
-                  ou definir background-image em .showcase-card. */}
-              <span className="showcase-card-hint mono">{c.label}</span>
-            </div>
-          ))}
+        <div className="showcase-testimonials">
+          <CircularTestimonials
+            testimonials={t.showcase.testimonials.map((item, i) => ({
+              ...item,
+              src: SHOWCASE_IMAGES[i % SHOWCASE_IMAGES.length],
+            }))}
+            autoplay={true}
+            colors={{
+              name: "#ffffff",
+              designation: "#c6f04e",
+              testimony: "#d6d6d6",
+              arrowBackground: "#1f1f1f",
+              arrowForeground: "#c6f04e",
+              arrowHoverBackground: "#c6f04e",
+            }}
+            fontSizes={{
+              name: "1.6rem",
+              designation: "0.95rem",
+              quote: "1.05rem",
+            }}
+          />
         </div>
       </section>
 
