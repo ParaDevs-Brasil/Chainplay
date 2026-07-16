@@ -34,6 +34,14 @@ export default function WalletPage() {
   const [error, setError] = useState("");
   const [claiming, setClaiming] = useState<string | null>(null);
   const [claimedNow, setClaimedNow] = useState<Set<string>>(new Set());
+  const [copied, setCopied] = useState(false);
+
+  function copyAddress() {
+    if (!account.address) return;
+    navigator.clipboard?.writeText(account.address);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  }
 
   useEffect(() => {
     document.title = t.walletPage.docTitle;
@@ -87,7 +95,7 @@ export default function WalletPage() {
   };
 
   return (
-    <div className="game-page">
+    <div className="game-page wallet-page">
       <BackBar
         action={
           accountCta ?? {
@@ -101,18 +109,38 @@ export default function WalletPage() {
         <header className="game-hero">
           <h1 className="game-question">{t.walletPage.title}</h1>
           <p className="game-sub">{t.walletPage.sub}</p>
-          {account.address && (
-            <span className="badge mono">
-              {account.displayName} · {account.address.slice(0, 4)}…{account.address.slice(-4)}
-            </span>
-          )}
-          {account.mode === "custodial" && (
-            <p className="dim custodial-info mono">
-              {t.auth.custodialBalance(formatSol(account.custodialBalance ?? 0))} ·{" "}
-              {t.auth.custodialFund(account.address ?? "")}
-            </p>
-          )}
         </header>
+
+        {account.address && (
+          <section className="wallet-card">
+            <div className="wallet-id">
+              <span className="wallet-avatar" aria-hidden="true">
+                👛
+              </span>
+              <div className="wallet-id-text">
+                <span className="wallet-name">{account.displayName}</span>
+                <button
+                  className="wallet-addr mono"
+                  onClick={copyAddress}
+                  title={account.address}
+                >
+                  {account.address.slice(0, 4)}…{account.address.slice(-4)}
+                  <span className="wallet-copy">{copied ? "✓" : "⧉"}</span>
+                </button>
+              </div>
+            </div>
+            {account.mode === "custodial" && (
+              <div className="wallet-balance mono">
+                {t.auth.custodialBalance(formatSol(account.custodialBalance ?? 0))}
+              </div>
+            )}
+          </section>
+        )}
+        {account.address && account.mode === "custodial" && (
+          <p className="dim wallet-topup mono">
+            {t.auth.custodialFund(account.address ?? "")}
+          </p>
+        )}
 
         {!account.address && <LoginPanel note={t.walletPage.connectFirst} />}
 
@@ -120,7 +148,10 @@ export default function WalletPage() {
           <>
             {state === "loading" && <p className="dim center">{t.walletPage.loading}</p>}
             {state === "error" && (
-              <div className="endgame">
+              <div className="endgame wallet-state">
+                <span className="wallet-state-icon" aria-hidden="true">
+                  ⚠️
+                </span>
                 <p className="dim">{error}</p>
                 <button onClick={refresh}>{t.walletPage.refresh}</button>
               </div>
@@ -128,7 +159,10 @@ export default function WalletPage() {
             {state === "ready" && (
               <>
                 {tickets.length === 0 ? (
-                  <div className="endgame">
+                  <div className="endgame wallet-state">
+                    <span className="wallet-state-icon" aria-hidden="true">
+                      🎫
+                    </span>
                     <p>{t.walletPage.empty}</p>
                     <a className="btn primary small" href="#/jogos">
                       {t.nav.games} →

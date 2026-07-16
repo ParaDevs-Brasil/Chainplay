@@ -5008,3 +5008,135 @@ ol.hilo-steps.hilo-steps-rich {
     transition: none;
   }
 }
+
+/* ===================== Wallet (#/carteira) — repaginada =====================
+   Escopado em .wallet-page: card de carteira (saldo/endereço), tickets como
+   NFT-cards com realce por status e estados vazio/erro mais visuais. */
+
+/* --- card de carteira: identidade + saldo --- */
+.wallet-page .wallet-card {
+  width: 100%;
+  max-width: 560px;
+  margin: 6px auto 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: linear-gradient(
+    180deg,
+    rgba(198, 240, 78, 0.07),
+    rgba(16, 16, 19, 0.72)
+  );
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+.wallet-page .wallet-id {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.wallet-page .wallet-avatar {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 1.4rem;
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+.wallet-page .wallet-id-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  min-width: 0;
+}
+.wallet-page .wallet-name {
+  font-weight: 700;
+  font-size: 1.02rem;
+  color: var(--text);
+}
+.wallet-page .wallet-addr {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.15s;
+}
+.wallet-page .wallet-addr:hover {
+  color: var(--text-2);
+}
+.wallet-page .wallet-copy {
+  color: var(--brand);
+  font-size: 0.95rem;
+}
+.wallet-page .wallet-balance {
+  flex: none;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  padding: 9px 15px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.wallet-page .wallet-topup {
+  max-width: 560px;
+  margin: 0 auto 12px;
+  text-align: center;
+  font-size: 0.72rem;
+  line-height: 1.55;
+  word-break: break-all;
+}
+
+/* --- tickets como NFT-cards: barra de status na lateral --- */
+.wallet-page .ticket-card {
+  border-radius: 14px;
+  position: relative;
+  overflow: hidden;
+  padding-left: 24px;
+}
+.wallet-page .ticket-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--muted);
+}
+.wallet-page .ticket-open::before {
+  background: var(--brand);
+}
+.wallet-page .ticket-claimable::before {
+  background: #5eea8f;
+}
+.wallet-page .ticket-lost::before {
+  background: var(--red);
+}
+.wallet-page .ticket-claimed::before {
+  background: var(--muted);
+}
+.wallet-page .ticket-head strong {
+  font-size: 1rem;
+}
+
+/* --- estados vazio / erro mais visuais --- */
+.wallet-page .wallet-state {
+  gap: 12px;
+}
+.wallet-page .wallet-state-icon {
+  font-size: 2.4rem;
+  line-height: 1;
+}
