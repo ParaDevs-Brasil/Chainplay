@@ -495,6 +495,14 @@ export default function StakedHilo({ mode = "target" }: { mode?: RunMode }) {
           <section className="hilo-stage hilo-final">
             <Mascot mood="point" bubble={t.hiloUi.bubbleBetting} alt={t.hiloUi.mascotAlt} />
             <div className="hilo-final-body">
+              {/* timeline da transação: onde o jogador está no fluxo on-chain */}
+              <ol className="hilo-flow" aria-label={t.staked.betTitle}>
+                <li className="is-done">{t.hiloUi.flowSteps[0]}</li>
+                <li className={phase === "signing" ? "is-busy" : "is-now"}>
+                  {t.hiloUi.flowSteps[1]}
+                </li>
+                <li>{t.hiloUi.flowSteps[2]}</li>
+              </ol>
               <h2>{t.staked.betTitle}</h2>
               <p className="dim">{t.staked.betNote(3)}</p>
               {(() => {

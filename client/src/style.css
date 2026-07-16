@@ -4104,6 +4104,49 @@ a.game-card:hover {
 
 /* ---------- Hi-Lo redesign: palco, escada, mascote e HUD ---------- */
 
+/* fundo premium do palco de jogo: glows da marca + grid sutil, tudo em
+   gradientes CSS (zero imagens, zero custo de paint em scroll) */
+.game-page {
+  position: relative;
+  isolation: isolate;
+}
+
+.game-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      42% 34% at 18% 8%,
+      rgba(198, 240, 78, 0.055),
+      transparent 70%
+    ),
+    radial-gradient(
+      50% 40% at 85% 90%,
+      rgba(198, 240, 78, 0.04),
+      transparent 70%
+    ),
+    linear-gradient(rgba(255, 255, 255, 0.016) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.016) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 44px 44px, 44px 44px;
+}
+
+/* o grid some suavemente em direção ao centro pra não competir com o jogo */
+.game-page::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    60% 55% at 50% 42%,
+    var(--bg) 20%,
+    transparent 100%
+  );
+}
+
 /* hero do Infinite: badge, título grande e tagline de conversão */
 .hilo-hero {
   gap: 12px;
@@ -4485,11 +4528,27 @@ a.game-card:hover {
   color: var(--brand);
 }
 
-/* degrau atual: onde o prêmio está garantido */
+/* degrau atual: onde o prêmio está garantido. A classe entra quando o
+   jogador acerta, então o pop de conquista toca a cada subida. */
 .rail-rung.current {
   border-color: var(--brand);
   box-shadow: 0 0 20px rgba(198, 240, 78, 0.3);
   transform: scale(1.06);
+  animation: rung-climb 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes rung-climb {
+  0% {
+    transform: scale(0.92) translateY(6px);
+    box-shadow: 0 0 0 rgba(198, 240, 78, 0);
+  }
+  55% {
+    transform: scale(1.14) translateY(-3px);
+    box-shadow: 0 0 34px rgba(198, 240, 78, 0.55);
+  }
+  100% {
+    transform: scale(1.06) translateY(0);
+  }
 }
 
 .rail-rung.current .rung-mult {
@@ -4640,6 +4699,72 @@ a.game-card:hover {
   display: flex;
   justify-content: center;
   margin-top: -4px;
+}
+
+/* timeline do fluxo on-chain: feito → agora → próximo */
+.hilo-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.hilo-flow li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.hilo-flow li::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--muted);
+  flex: 0 0 auto;
+}
+
+.hilo-flow li:not(:last-child)::after {
+  content: "";
+  width: 12px;
+  height: 1px;
+  background: var(--border);
+  margin-left: 4px;
+}
+
+.hilo-flow .is-done {
+  color: var(--brand);
+}
+
+.hilo-flow .is-done::before {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+.hilo-flow .is-now {
+  color: var(--text);
+}
+
+.hilo-flow .is-now::before {
+  border-color: var(--brand);
+  animation: pending-pulse 1.6s ease-in-out infinite;
+}
+
+.hilo-flow .is-busy {
+  color: var(--text);
+}
+
+.hilo-flow .is-busy::before {
+  border-color: var(--brand);
+  border-right-color: transparent;
+  animation: hilo-spin 0.7s linear infinite;
 }
 
 /* ---------- countdown da janela de assinatura ---------- */
@@ -4815,7 +4940,9 @@ a.game-card:hover {
   .hilo-mascot img,
   .hilo-mascot.mood-cheer img,
   .hilo-mascot.mood-suspense img,
-  .rail-rung.next {
+  .rail-rung.next,
+  .rail-rung.current,
+  .hilo-flow .is-now::before {
     animation: none;
   }
 
