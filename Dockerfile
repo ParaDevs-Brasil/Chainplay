@@ -7,10 +7,12 @@ FROM node:20-slim
 WORKDIR /app
 
 # 1) deps do client + server (camadas cacheáveis: só reinstalam se o manifesto mudar)
+# npm install (não ci): os lockfiles são gitignorados por decisão do time,
+# então não existem no contexto de build de PaaS que clona do git.
 COPY client/package*.json client/
-RUN npm ci --prefix client
+RUN npm install --prefix client
 COPY server/package*.json server/
-RUN npm ci --prefix server
+RUN npm install --prefix server
 
 # 2) código e build do client
 COPY client/ client/
