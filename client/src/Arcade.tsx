@@ -131,7 +131,7 @@ export default function Arcade({ game }: { game: ArcadeGame }) {
   const pct = Math.round((leftMs / totalMs) * 100);
 
   return (
-    <div className="game-page arcade-page">
+    <div className={`game-page arcade-page ${game === "penalty" ? "penalty-page" : ""}`}>
       <BackBar
         action={
           accountCta ?? {

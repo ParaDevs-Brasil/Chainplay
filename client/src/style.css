@@ -3816,6 +3816,29 @@ a.game-card:hover {
   text-align: center;
 }
 
+/* Penalty Predictor: foto de estádio ao fundo, escurecida para o tema
+   Midnight — sobrepõe o grid padrão do .game-page::before. */
+.game-page.penalty-page::before {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(11, 11, 13, 0.82) 0%,
+      rgba(11, 11, 13, 0.9) 45%,
+      var(--bg) 100%
+    ),
+    url("/backgrounds/penalty-stadium.jpg") center 22% / cover no-repeat;
+  background-attachment: fixed;
+}
+
+/* clareia um pouco o degradê central para a foto respirar no topo */
+.game-page.penalty-page::after {
+  background: radial-gradient(
+    70% 60% at 50% 40%,
+    transparent 0%,
+    var(--bg) 85%
+  );
+}
+
 /* leaderboard do arcade: sem caixa, só um filete sutil acima (ref.) */
 .arcade-page .lb-card {
   background: transparent;
