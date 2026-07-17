@@ -2604,12 +2604,11 @@ button.lo:hover:not(:disabled) {
   aspect-ratio: 16 / 10;
   border-radius: 12px;
   background: #0b0b0d;
-  border: 1px solid rgba(198, 240, 78, 0.4);
+  border: 1px solid rgba(198, 240, 78, 0.18);
   box-shadow:
     0 24px 60px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(198, 240, 78, 0.08),
-    0 0 70px rgba(198, 240, 78, 0.35),
-    0 0 140px rgba(198, 240, 78, 0.18);
+    0 0 30px rgba(198, 240, 78, 0.12),
+    0 0 60px rgba(198, 240, 78, 0.06);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2622,16 +2621,14 @@ button.lo:hover:not(:disabled) {
   100% {
     box-shadow:
       0 24px 60px rgba(0, 0, 0, 0.4),
-      0 0 0 1px rgba(198, 240, 78, 0.08),
-      0 0 70px rgba(198, 240, 78, 0.35),
-      0 0 140px rgba(198, 240, 78, 0.18);
+      0 0 30px rgba(198, 240, 78, 0.12),
+      0 0 60px rgba(198, 240, 78, 0.06);
   }
   50% {
     box-shadow:
       0 24px 60px rgba(0, 0, 0, 0.4),
-      0 0 0 1px rgba(198, 240, 78, 0.14),
-      0 0 90px rgba(198, 240, 78, 0.5),
-      0 0 170px rgba(198, 240, 78, 0.26);
+      0 0 38px rgba(198, 240, 78, 0.2),
+      0 0 74px rgba(198, 240, 78, 0.1);
   }
 }
 
