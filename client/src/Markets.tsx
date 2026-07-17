@@ -126,17 +126,31 @@ export default function Markets() {
           <p className="game-sub">{t.marketsUi.heroTag}</p>
         </header>
 
-        {/* o loop do jogo em 4 passos: bate o olho e sabe jogar */}
-        <ol className="hilo-steps hilo-steps-rich mkt-steps">
-          {t.marketsUi.steps.map((s, i) => (
-            <li key={i}>
-              <span className="hilo-step-n mono">{i + 1}</span>
-              <div>
-                <strong>{s}</strong>
-                <small>{t.marketsUi.stepDescs[i]}</small>
-              </div>
-            </li>
-          ))}
+        {/* o loop do jogo como trilho conectado — mesma linguagem da timeline
+            de assinatura, com os chips 1·X·2 ecoando os botões reais abaixo */}
+        <ol className="mkt-flow">
+          <li>
+            <span className="mkt-flow-glyph">
+              <span className="mkt-flow-chip mono">◎ SOL</span>
+            </span>
+            <span className="mkt-flow-label">{t.marketsUi.flow[0]}</span>
+          </li>
+          <li>
+            <span className="mkt-flow-glyph">
+              <span className="mkt-mini-tag mono">1</span>
+              <span className="mkt-mini-tag mono">X</span>
+              <span className="mkt-mini-tag mono">2</span>
+            </span>
+            <span className="mkt-flow-label">{t.marketsUi.flow[1]}</span>
+          </li>
+          <li>
+            <span className="mkt-flow-glyph">✍️</span>
+            <span className="mkt-flow-label">{t.marketsUi.flow[2]}</span>
+          </li>
+          <li>
+            <span className="mkt-flow-glyph">🏆</span>
+            <span className="mkt-flow-label">{t.marketsUi.flow[3]}</span>
+          </li>
         </ol>
 
         {error && <p className="dim center run-error">⚠️ {error}</p>}
@@ -156,11 +170,7 @@ export default function Markets() {
               </button>
             ))}
           </div>
-          {account.address && (
-            <p className="mkt-tap-hint">
-              👇 {t.marketsUi.tapHint(`${stakeSol} SOL`)}
-            </p>
-          )}
+        
         </div>
 
         {loading ? (
@@ -178,19 +188,15 @@ export default function Markets() {
               const myPick = placed[m.marketId];
               return (
                 <div key={m.marketId} className="card market-card">
-                  <div className="market-head">
-                    <strong>
-                      <span aria-hidden="true">{teamFlag(m.home)}</span> {m.home}{" "}
-                      <em>vs</em> {m.away}{" "}
-                      <span aria-hidden="true">{teamFlag(m.away)}</span>
-                    </strong>
+                  {/* sem título: os times já vivem nos botões 1 e 2 */}
+                  <div className="market-head mkt-head-slim">
                     <span className="badge mono">
                       {m.demo ? `${t.markets.demoTag} · ` : ""}
                       {m.status === "resolved"
                         ? t.markets.resolvedTag
                         : m.status === "voided"
                         ? t.markets.voidedTag
-                        : `${t.markets.locksIn} ${countdown(secs)}`}
+                        : `⏱ ${t.markets.locksIn} ${countdown(secs)}`}
                     </span>
                   </div>
 
@@ -213,7 +219,14 @@ export default function Markets() {
                           <span className="mkt-tag mono" aria-hidden="true">
                             {i === 0 ? "1" : i === 1 ? "X" : "2"}
                           </span>
-                          <span className="outcome-name">{outcomeLabel(m, i)}</span>
+                          <span className="outcome-name">
+                            {i !== 1 && (
+                              <span className="flag" aria-hidden="true">
+                                {teamFlag(i === 0 ? m.home : m.away)}{" "}
+                              </span>
+                            )}
+                            {outcomeLabel(m, i)}
+                          </span>
                           <span className="outcome-pct mono">{m.poolPct[i]}%</span>
                           <small className="mono">{formatSol(m.pools[i], 4)}</small>
                           <span className="mkt-est mono">
@@ -249,8 +262,7 @@ export default function Markets() {
                   </div>
 
                   <div className="market-foot mono">
-                    💰 {formatSol(m.totalPool, 4)} {t.markets.inPool} ·{" "}
-                    <span className="dim">{t.marketsUi.estNote}</span>
+                    💰 {formatSol(m.totalPool, 4)} {t.markets.inPool}
                   </div>
                   {myPick !== undefined && (
                     <p className="dim market-ok">{t.markets.betOk}</p>
@@ -259,6 +271,11 @@ export default function Markets() {
               );
             })}
           </div>
+        )}
+
+        {/* nota do ≈× uma vez só, fora dos cards */}
+        {!loading && visible.length > 0 && (
+          <p className="dim center mkt-note">{t.marketsUi.estNote}</p>
         )}
 
         <footer>{t.game.gameFooter}</footer>

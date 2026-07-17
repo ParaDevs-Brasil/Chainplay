@@ -4187,9 +4187,125 @@ a.game-card:hover {
   margin-bottom: 4px;
 }
 
+/* trilho "como jogar": nós conectados por linha, sem numeração de seção */
+.mkt-flow {
+  list-style: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  margin: 4px 0 2px;
+  padding: 0;
+  width: 100%;
+}
+
+.mkt-flow li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 0 26px;
+}
+
+/* conector entre os nós, na altura dos glifos */
+.mkt-flow li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: calc(100% - 20px);
+  top: 13px;
+  width: 40px;
+  height: 2px;
+  background: var(--border);
+}
+
+.mkt-flow-glyph {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.mkt-flow-chip {
+  padding: 4px 10px;
+  border: 1px solid rgba(198, 240, 78, 0.45);
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--brand);
+  background: rgba(198, 240, 78, 0.07);
+}
+
+/* eco em miniatura das etiquetas 1/X/2 dos botões reais */
+.mkt-mini-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.mkt-mini-tag:nth-child(2) {
+  color: var(--brand-ink);
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+.mkt-flow-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .mkt-flow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 8px;
+    max-width: 420px;
+    margin-inline: auto;
+  }
+
+  .mkt-flow li {
+    padding: 0;
+  }
+
+  .mkt-flow li:not(:last-child)::after {
+    content: none;
+  }
+
+  .mkt-flow-label {
+    white-space: normal;
+    text-align: center;
+  }
+}
+
 .mkt-stake {
   align-items: center;
   width: 100%;
+}
+
+/* cabeçalho enxuto: só o countdown de lock, sem repetir os times */
+.mkt-head-slim {
+  justify-content: flex-end;
+}
+
+.mkt-note {
+  margin: -6px 0 0;
+  font-size: 0.75rem;
+  max-width: 62ch;
+}
+
+.outcome-name .flag {
+  font-size: 1.05rem;
 }
 
 /* a ponte entre o stake e os cards: deixa explícito o que o clique faz */

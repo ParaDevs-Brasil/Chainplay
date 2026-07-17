@@ -813,10 +813,19 @@ const pt = {
       "Your wallet signs — a ticket-NFT is your proof.",
       "After the match, the pot splits by stake among winners.",
     ],
+    flow: ["Stake", "Pick a side", "Sign", "Winners split the pot"],
     tapHint: (sol: string) => `Tap an outcome below to bet ${sol}`,
     betCta: (sol: string) => `Bet ${sol}`,
     est: (x: string) => `≈${x}× now`,
     estNote: "≈× is the payout right now — it moves as the pot grows.",
+  },
+
+  /* microcopy do redesign do Penalty Predictor (motor arcade) */
+  arcadeUi: {
+    penaltyTitleA: "Penalty",
+    penaltyTitleB: "Predictor",
+    flow: ["Start a shot", "Call the corner", "Beat the clock", "Build the streak"],
+    signSteps: ["Session created", "Sign the bet", "Take your shots"],
   },
 
   statsGame: {
@@ -1891,10 +1900,19 @@ const en: Dict = {
       "Your wallet signs — a ticket-NFT is your proof.",
       "After the match, the pot splits by stake among winners.",
     ],
+    flow: ["Stake", "Pick a side", "Sign", "Winners split the pot"],
     tapHint: (sol: string) => `Tap an outcome below to bet ${sol}`,
     betCta: (sol: string) => `Bet ${sol}`,
     est: (x: string) => `≈${x}× now`,
     estNote: "≈× is the payout right now — it moves as the pot grows.",
+  },
+
+  /* microcopy do redesign do Penalty Predictor (motor arcade) */
+  arcadeUi: {
+    penaltyTitleA: "Penalty",
+    penaltyTitleB: "Predictor",
+    flow: ["Start a shot", "Call the corner", "Beat the clock", "Build the streak"],
+    signSteps: ["Session created", "Sign the bet", "Take your shots"],
   },
 
   statsGame: {

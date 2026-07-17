@@ -4,7 +4,6 @@ import { useLang } from "./i18n";
 import { LoginPanel, useAccount, useAccountCta } from "./chain/account";
 import { api } from "./chain/http";
 import { formatSol, type PlacedBet } from "./chain/oddies";
-import HowTo from "./components/HowTo";
 import Leaderboard from "./components/Leaderboard";
 import StakedSession from "./components/StakedSession";
 import { celebrateCorrect, celebrateWin } from "./celebration";
@@ -143,12 +142,44 @@ export default function Arcade({ game }: { game: ArcadeGame }) {
       />
 
       <div className="shell">
-        <header className="game-hero">
-          <h1 className="game-question">{texts.title}</h1>
+        <header className={`game-hero ${game === "penalty" ? "hilo-hero" : ""}`}>
+          {game === "penalty" ? (
+            <>
+              <span className="hilo-hero-badge">{t.hiloUi.heroBadge}</span>
+              <h1 className="hilo-display">
+                <span>{t.arcadeUi.penaltyTitleA}</span>
+                <span className="accent">{t.arcadeUi.penaltyTitleB}</span>
+              </h1>
+            </>
+          ) : (
+            <h1 className="game-question">{texts.title}</h1>
+          )}
           <p className="game-sub">{texts.sub}</p>
         </header>
 
-        <HowTo steps={t.howto[game].steps} profit={t.howto[game].profit} />
+        {/* o loop do jogo como trilho conectado, com os cantos ◀ ▶ ecoando
+            os botões reais do palpite */}
+        <ol className="mkt-flow">
+          <li>
+            <span className="mkt-flow-glyph">🥅</span>
+            <span className="mkt-flow-label">{t.arcadeUi.flow[0]}</span>
+          </li>
+          <li>
+            <span className="mkt-flow-glyph">
+              <span className="mkt-mini-tag mono">◀</span>
+              <span className="mkt-mini-tag mono">▶</span>
+            </span>
+            <span className="mkt-flow-label">{t.arcadeUi.flow[1]}</span>
+          </li>
+          <li>
+            <span className="mkt-flow-glyph">⏱</span>
+            <span className="mkt-flow-label">{t.arcadeUi.flow[2]}</span>
+          </li>
+          <li>
+            <span className="mkt-flow-glyph">🔥</span>
+            <span className="mkt-flow-label">{t.arcadeUi.flow[3]}</span>
+          </li>
+        </ol>
 
         {error && <p className="dim center run-error">⚠️ {error}</p>}
         {!account.address && <LoginPanel note={t.arcade.connectFirst} />}
@@ -658,9 +689,21 @@ function StakedPenalty() {
             ))}
           </div>
 
-          <div className="potential mono">
-            {t.staked.potential}: <b>{formatSol(potential)}</b>
-          </div>
+          {/* resumo da aposta: stake → odds → prêmio, como nos outros jogos */}
+          <dl className="hilo-summary penalty-summary">
+            <div>
+              <dt>{t.hiloUi.summaryStake}</dt>
+              <dd className="mono">{stakeSol} SOL</dd>
+            </div>
+            <div>
+              <dt>{t.hiloUi.summaryTop}</dt>
+              <dd className="mono">{(oddsBps / 10_000).toLocaleString()}×</dd>
+            </div>
+            <div className="hilo-summary-prize">
+              <dt>{t.hiloUi.summaryPrize}</dt>
+              <dd className="mono">{formatSol(potential)}</dd>
+            </div>
+          </dl>
           {insufficient && (
             <p className="dim center run-error">
               ⚠️ {t.staked.insufficient(formatSol(stakeLamports))}
@@ -671,7 +714,14 @@ function StakedPenalty() {
             disabled={phase === "creating" || !oddsBps || insufficient}
             onClick={createSession}
           >
-            {phase === "creating" ? t.penaltySession.creating : t.penaltySession.start}
+            {phase === "creating" ? (
+              <span className="hilo-btn-loading">
+                <span className="hilo-spinner" aria-hidden="true" />
+                {t.penaltySession.creating}
+              </span>
+            ) : (
+              t.penaltySession.start
+            )}
           </button>
           <p className="dim devnet-note">{t.staked.devnetNote}</p>
         </>
@@ -679,19 +729,61 @@ function StakedPenalty() {
 
       {/* ---------- assinar a aposta ---------- */}
       {(phase === "betting" || phase === "signing") && session && (
-        <div className="endgame">
-          <h2>{t.staked.betTitle}</h2>
-          <p className="dim">{t.staked.betNote(3)}</p>
-          <p className="mono lock-countdown">
-            ⏱ {Math.floor(secondsToClose / 60)}:
-            {String(secondsToClose % 60).padStart(2, "0")}
-          </p>
-          <button className="primary" disabled={phase === "signing"} onClick={signBet}>
-            {phase === "signing"
-              ? t.staked.signing
-              : t.staked.signBet(formatSol(session.stakeLamports))}
-          </button>
-        </div>
+        <section className="hilo-stage hilo-final">
+          <div className="hilo-final-body">
+            {/* timeline da transação: onde o jogador está no fluxo on-chain */}
+            <ol className="hilo-flow" aria-label={t.staked.betTitle}>
+              <li className="is-done">{t.arcadeUi.signSteps[0]}</li>
+              <li className={phase === "signing" ? "is-busy" : "is-now"}>
+                {t.arcadeUi.signSteps[1]}
+              </li>
+              <li>{t.arcadeUi.signSteps[2]}</li>
+            </ol>
+            <h2>{t.staked.betTitle}</h2>
+            <p className="dim">{t.staked.betNote(3)}</p>
+            {(() => {
+              // exibição: antes do 1º tick do interval, deriva direto do closeTs
+              const shown =
+                secondsToClose > 0
+                  ? secondsToClose
+                  : Math.max(0, session.closeTs - Math.floor(Date.now() / 1000));
+              return (
+                <div className="hilo-countdown">
+                  <span className="hilo-countdown-label">{t.hiloUi.signWindow}</span>
+                  <span className="mono hilo-countdown-time">
+                    ⏱ {Math.floor(shown / 60)}:{String(shown % 60).padStart(2, "0")}
+                  </span>
+                  <div
+                    className="hilo-countdown-bar"
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={180}
+                    aria-valuenow={shown}
+                  >
+                    <div
+                      className="hilo-countdown-fill"
+                      style={{ transform: `scaleX(${Math.min(1, shown / 180)})` }}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
+            <button
+              className="primary staked-cta"
+              disabled={phase === "signing"}
+              onClick={signBet}
+            >
+              {phase === "signing" ? (
+                <span className="hilo-btn-loading">
+                  <span className="hilo-spinner" aria-hidden="true" />
+                  {t.staked.signing}
+                </span>
+              ) : (
+                t.staked.signBet(formatSol(session.stakeLamports))
+              )}
+            </button>
+          </div>
+        </section>
       )}
 
       {/* ---------- jogando os 8 pênaltis ---------- */}
@@ -757,7 +849,8 @@ function StakedPenalty() {
 
       {/* ---------- vitória ---------- */}
       {phase === "won" && session && (
-        <div className="endgame">
+        <div className="hilo-stage hilo-final is-win">
+          <div className="hilo-final-body">
           <h2>{t.penaltySession.wonTitle}</h2>
           <p>{settled ? "" : t.staked.wonSub(formatSol(session.payoutLamports))}</p>
           {claimed ? (
@@ -781,25 +874,31 @@ function StakedPenalty() {
               {t.staked.seeWallet}
             </a>
           ) : (
-            <p className="dim">⏳ {t.staked.settling}</p>
+            <p className="dim hilo-settling">
+              <span className="hilo-spinner" aria-hidden="true" />
+              {t.staked.settling}
+            </p>
           )}
+          </div>
         </div>
       )}
 
       {/* ---------- derrota / expirada ---------- */}
       {(phase === "lost" || phase === "expired") && (
-        <div className="endgame">
-          <h2>
-            {phase === "lost" ? t.penaltySession.lostTitle : t.staked.expiredTitle}
-          </h2>
-          <p>{phase === "lost" ? t.penaltySession.lostSub : t.staked.betExpired}</p>
-          <div className="endgame-actions">
-            <button className="primary" onClick={reset}>
-              {t.staked.playAgain}
-            </button>
-            <a className="btn small" href="#/carteira">
-              {t.staked.seeWallet}
-            </a>
+        <div className="hilo-stage hilo-final is-loss">
+          <div className="hilo-final-body">
+            <h2>
+              {phase === "lost" ? t.penaltySession.lostTitle : t.staked.expiredTitle}
+            </h2>
+            <p>{phase === "lost" ? t.penaltySession.lostSub : t.staked.betExpired}</p>
+            <div className="endgame-actions">
+              <button className="primary" onClick={reset}>
+                {t.staked.playAgain}
+              </button>
+              <a className="btn small" href="#/carteira">
+                {t.staked.seeWallet}
+              </a>
+            </div>
           </div>
         </div>
       )}
