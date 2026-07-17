@@ -106,7 +106,7 @@ export default function Markets() {
   const visible = markets.filter((m) => m.status === "open" && m.closeTs > now);
 
   return (
-    <div className="game-page">
+    <div className="game-page markets-page">
       <BackBar
         action={
           accountCta ?? {

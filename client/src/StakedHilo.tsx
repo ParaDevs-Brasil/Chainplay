@@ -308,7 +308,7 @@ export default function StakedHilo({ mode = "target" }: { mode?: RunMode }) {
     .sort((a, b) => a - b);
 
   return (
-    <div className="game-page hilo-page">
+    <div className={`game-page hilo-page ${infinite ? "infinite-page" : ""}`}>
       <BackBar
         action={
           accountCta ?? {
