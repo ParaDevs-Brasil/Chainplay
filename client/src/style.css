@@ -565,14 +565,22 @@ a.logo:hover {
   display: flex;
   align-items: center;
   min-height: calc(100svh - 96px);
-  /* contém o transbordo do mascote (.hero-character bleed) nesta seção
-     em vez de deixar só o body cortar: alguns navegadores mobile calculam
-     `position: fixed` de outros elementos da página (ex.: o overlay do
-     menu) contra a largura de layout real quando há qualquer transbordo
-     não contido, mesmo que visualmente mascarado — então cortamos aqui
-     também para a largura de layout nunca crescer além da viewport. */
-  overflow-x: hidden;
-  overflow-x: clip;
+}
+
+/* contém o transbordo do mascote (.hero-character bleed) nesta seção em vez
+   de deixar só o body cortar: alguns navegadores mobile calculam
+   `position: fixed` de outros elementos da página (ex.: o overlay do menu)
+   contra a largura de layout real quando há qualquer transbordo não contido,
+   mesmo que visualmente mascarado. Restrito ao mobile (layout de coluna
+   única): no desktop isso cortava o mascote antes de ele poder ocupar a
+   margem lateral que o clip do body já existe para permitir (ver comentário
+   em body, acima), deixando um vão vazio entre o card e a borda da tela em
+   telas largas. */
+@media (max-width: 960px) {
+  .hero {
+    overflow-x: hidden;
+    overflow-x: clip;
+  }
 }
 
 .hero > .hero-grid {
@@ -3164,7 +3172,15 @@ button.lo:hover:not(:disabled) {
   /* em coluna única (centrado) o transbordo do desktop empurraria o card
      para fora à esquerda — volta ao deslocamento suave original */
   .hero-figure {
-    transform: translateX(clamp(-72px, -5vw, -36px));
+    transform: translateX(clamp(-100px, -13vw, -40px));
+  }
+
+  /* card e mascote encolhem junto com a tela nesta faixa: sem isso, o
+     mascote (135% do card) ultrapassa a borda direita da viewport em
+     telas estreitas e sua cauda fica cortada pelo overflow-x: clip
+     do .hero */
+  .hero-media {
+    width: clamp(160px, 50vw, 270px);
   }
 
   .hero-copy {
