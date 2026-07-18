@@ -3348,6 +3348,16 @@ button.lo:hover:not(:disabled) {
   aspect-ratio: 16 / 9;
 }
 
+/* acima de ~660px o card já é bem largo (até 1080px no hub), e manter
+   16:9 nessa largura toda deixava o painel excessivamente alto — trava
+   a altura aqui; object-fit: cover no vídeo cobre o resto sem distorcer. */
+@media (min-width: 661px) {
+  .pred-panel {
+    aspect-ratio: auto;
+    height: clamp(220px, 24vw, 360px);
+  }
+}
+
 .pred-video {
   position: absolute;
   inset: 0;
