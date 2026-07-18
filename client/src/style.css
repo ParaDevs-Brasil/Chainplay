@@ -5750,6 +5750,16 @@ ol.hilo-steps.hilo-steps-rich {
   display: block;
 }
 
+/* o vídeo é 16:9 (paisagem); em telas de celular (retrato) "cover" corta
+   boa parte do quadro — inclusive a logo que aparece no fim do clipe.
+   "contain" mostra o vídeo completo, com faixas pretas nas laterais em
+   vez de cortar conteúdo. */
+@media (max-width: 640px) {
+  .intro-splash-video {
+    object-fit: contain;
+  }
+}
+
 .intro-splash-skip {
   position: absolute;
   /* soma a margem clamp ao respiro de notch/home-indicator em telas com
