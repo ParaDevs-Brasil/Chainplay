@@ -1697,7 +1697,7 @@ const en: Dict = {
 
   auth: {
     title: "Sign in to play for SOL",
-    withWallet: "🔗 Connect wallet",
+    withWallet: " Connect wallet",
     logout: "logout",
     addressLabel: "Wallet address",
     copy: "Copy",
