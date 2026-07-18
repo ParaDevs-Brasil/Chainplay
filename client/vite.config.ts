@@ -22,7 +22,8 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      "/api": "http://localhost:3001",
+      // API_PROXY: desvio quando a 3001 está ocupada (ex.: API_PROXY=http://localhost:3010)
+      "/api": process.env.API_PROXY ?? "http://localhost:3001",
     },
   },
 });
