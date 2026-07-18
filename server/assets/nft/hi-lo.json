@@ -1,0 +1,22 @@
+{
+  "name": "Hi-Lo",
+  "symbol": "HILO",
+  "description": "Identidade on-chain do mini game \"Hi-Lo\" no ChainPlay — cada aposta vira uma NFT membro desta coleção.",
+  "image": "https://raw.githubusercontent.com/ParaDevs-Brasil/sol-hackton/bd62d01a0dc5a1813d5e19fb77fa95d51b339bf5/server/assets/nft/hi-lo.png",
+  "external_url": "https://github.com/ParaDevs-Brasil/sol-hackton",
+  "attributes": [
+    {
+      "trait_type": "game",
+      "value": "Hi-Lo"
+    }
+  ],
+  "properties": {
+    "category": "image",
+    "files": [
+      {
+        "uri": "https://raw.githubusercontent.com/ParaDevs-Brasil/sol-hackton/bd62d01a0dc5a1813d5e19fb77fa95d51b339bf5/server/assets/nft/hi-lo.png",
+        "type": "image/png"
+      }
+    ]
+  }
+}

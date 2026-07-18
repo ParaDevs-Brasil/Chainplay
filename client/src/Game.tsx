@@ -6,9 +6,14 @@ import {
   type GameMatch,
   type StatCategory,
 } from "./types";
-import { useLang, type Dict } from "./i18n";
-import Navbar from "./Navbar";
-import { teamFlag } from "./flags";
+import { useLang } from "./i18n";
+import BackBar from "./BackBar";
+import {
+  MatchCard,
+  ResultBanner,
+  type Guess,
+  type RoundResult,
+} from "./components/MatchCard";
 import {
   celebrateCorrect,
   celebrateWin,
@@ -16,7 +21,6 @@ import {
 } from "./celebration";
 import { playSfx } from "./sfx";
 
-type Guess = "higher" | "lower";
 // "rolling" é a janela de suspense entre o palpite e a revelação do número
 type Phase =
   | "loading"
@@ -26,11 +30,6 @@ type Phase =
   | "reveal"
   | "gameover"
   | "won";
-
-interface RoundResult {
-  correct: boolean;
-  push: boolean;
-}
 
 interface PendingOutcome {
   correct: boolean;
@@ -268,15 +267,7 @@ export default function Game() {
 
   return (
     <div className="game-page">
-      <Navbar
-        links={[
-          { label: t.nav.home, href: "#/" },
-          { label: t.nav.howToPlay, onClick: () => setShowHelp(true) },
-          { label: t.nav.ranking, soon: true },
-          { label: t.nav.history, soon: true },
-        ]}
-        cta={{ label: t.game.playAgain, onClick: restart }}
-      />
+      <BackBar />
 
       <div className="shell">
       {/* pergunta principal em primeiro: a decisão é o protagonista da tela */}
@@ -289,6 +280,15 @@ export default function Game() {
           {t.game.questionTitle(t.game.categoryLabels[category])}
         </h1>
         <p className="game-sub">{t.game.categoryQuestion(currentValue, unit)}</p>
+        {/* ações do jogo migradas do navbar pra dentro da tela */}
+        <div className="game-toolbar">
+          <button className="btn small ghost" onClick={() => setShowHelp(true)}>
+            {t.nav.howToPlay}
+          </button>
+          <button className="btn small ghost" onClick={restart}>
+            {t.game.playAgain}
+          </button>
+        </div>
       </header>
 
       <div className="cards">
@@ -467,124 +467,6 @@ export default function Game() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-/* número girando durante o suspense do reveal */
-function RollingValue({ max }: { max: number }) {
-  const [n, setN] = useState(() => Math.floor(Math.random() * (max + 6)));
-  useEffect(() => {
-    const id = window.setInterval(
-      () => setN(Math.floor(Math.random() * (max + 6))),
-      70
-    );
-    return () => window.clearInterval(id);
-  }, [max]);
-  return <span className="rolling">{n}</span>;
-}
-
-function MatchCard({
-  match,
-  value,
-  revealed,
-  rolling = false,
-  rollMax = 10,
-  label,
-  unit,
-  t,
-  stateClass = "",
-}: {
-  match?: GameMatch;
-  value: number;
-  revealed: boolean;
-  rolling?: boolean;
-  rollMax?: number;
-  label: string;
-  unit: string;
-  t: Dict;
-  stateClass?: string;
-}) {
-  if (!match) return <div className="card" />;
-  return (
-    <div
-      className={`card ${revealed ? "revealed" : "hidden-value"} ${
-        stateClass === "flash-bad" ? "wrong-shake" : ""
-      }`}
-    >
-      <span className="card-label">{label}</span>
-      {match.stage && <span className="stage">{match.stage}</span>}
-      <div className="teams">
-        <span className="team">
-          <span className="flag" aria-hidden="true">
-            {teamFlag(match.home)}
-          </span>
-          {match.home}
-        </span>
-        <em>vs</em>
-        <span className="team">
-          <span className="flag" aria-hidden="true">
-            {teamFlag(match.away)}
-          </span>
-          {match.away}
-        </span>
-      </div>
-      <div className={`value ${revealed ? stateClass : ""}`}>
-        {revealed ? value : rolling ? <RollingValue max={rollMax} /> : "?"}
-      </div>
-      <div className="value-unit">{unit}</div>
-      {revealed ? (
-        <div className="scoreline">
-          {t.game.scoreline(match.stats.goals[0], match.stats.goals[1])}
-        </div>
-      ) : rolling ? (
-        <div className="scoreline dim-hint">{t.game.hiddenHint}</div>
-      ) : (
-        <span className="pending-chip">{t.game.pendingPick}</span>
-      )}
-    </div>
-  );
-}
-
-function ResultBanner({
-  result,
-  guess,
-  current,
-  next,
-  unit,
-  t,
-}: {
-  result: RoundResult | null;
-  guess: Guess | null;
-  current: number;
-  next: number;
-  unit: string;
-  t: Dict;
-}) {
-  if (!result) return null;
-  const cmp = next > current ? ">" : next < current ? "<" : "=";
-  const detail = (
-    <span className="result-detail mono">
-      {next} {cmp} {current}
-    </span>
-  );
-  if (result.push) {
-    return (
-      <div className="result push">
-        {t.game.resultPush} {detail}
-        <small>{t.game.resultPushNote}</small>
-      </div>
-    );
-  }
-  return result.correct ? (
-    <div className="result ok">
-      {t.game.resultOk} {detail}
-      <small>{t.game.resultOkNote(cmp === ">")}</small>
-    </div>
-  ) : (
-    <div className="result bad">
-      {t.game.resultBad} {detail}
-      <small>{t.game.resultBadNote(guess === "higher", next, unit)}</small>
     </div>
   );
 }

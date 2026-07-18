@@ -1,0 +1,22 @@
+{
+  "name": "Penalty Predictor",
+  "symbol": "PENA",
+  "description": "Identidade on-chain do mini game \"Penalty Predictor\" no ChainPlay — cada aposta vira uma NFT membro desta coleção.",
+  "image": "https://raw.githubusercontent.com/ParaDevs-Brasil/sol-hackton/bd62d01a0dc5a1813d5e19fb77fa95d51b339bf5/server/assets/nft/penalty-predictor.png",
+  "external_url": "https://github.com/ParaDevs-Brasil/sol-hackton",
+  "attributes": [
+    {
+      "trait_type": "game",
+      "value": "Penalty Predictor"
+    }
+  ],
+  "properties": {
+    "category": "image",
+    "files": [
+      {
+        "uri": "https://raw.githubusercontent.com/ParaDevs-Brasil/sol-hackton/bd62d01a0dc5a1813d5e19fb77fa95d51b339bf5/server/assets/nft/penalty-predictor.png",
+        "type": "image/png"
+      }
+    ]
+  }
+}

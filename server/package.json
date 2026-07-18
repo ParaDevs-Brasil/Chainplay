@@ -4,24 +4,37 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "ALLOW_GUEST=1 tsx watch src/index.ts",
     "start": "tsx src/index.ts",
-    "subscribe": "tsx src/scripts/subscribe.ts"
+    "subscribe": "tsx src/scripts/subscribe.ts",
+    "create:collections": "tsx src/scripts/create-collections.ts",
+    "verify:collections": "tsx src/scripts/verify-collections.ts",
+    "e2e:run": "tsx src/scripts/e2e-run.ts",
+    "e2e:full": "tsx src/scripts/e2e-full.ts",
+    "update:collections": "tsx src/scripts/update-collections.ts",
+    "e2e:games": "tsx src/scripts/e2e-games.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
     "@solana/spl-token": "^0.4.9",
     "@solana/web3.js": "^1.98.0",
     "axios": "^1.7.9",
+    "bn.js": "^5.2.5",
+    "bs58": "^6.0.0",
+    "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "tweetnacl": "^1.0.3"
+    "tweetnacl": "^1.0.3",
+    "ws": "^8.21.0"
   },
   "devDependencies": {
+    "@types/bn.js": "^5.2.0",
+    "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^22.10.5",
+    "@types/ws": "^8.18.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }

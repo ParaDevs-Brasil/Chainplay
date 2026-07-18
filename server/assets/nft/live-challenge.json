@@ -1,0 +1,22 @@
+{
+  "name": "Live Challenge",
+  "symbol": "LIVE",
+  "description": "Identidade on-chain do mini game \"Live Challenge\" no ChainPlay — cada aposta vira uma NFT membro desta coleção.",
+  "image": "https://raw.githubusercontent.com/ParaDevs-Brasil/sol-hackton/bd62d01a0dc5a1813d5e19fb77fa95d51b339bf5/server/assets/nft/live-challenge.png",
+  "external_url": "https://github.com/ParaDevs-Brasil/sol-hackton",
+  "attributes": [
+    {
+      "trait_type": "game",
+      "value": "Live Challenge"
+    }
+  ],
+  "properties": {
+    "category": "image",
+    "files": [
+      {
+        "uri": "https://raw.githubusercontent.com/ParaDevs-Brasil/sol-hackton/bd62d01a0dc5a1813d5e19fb77fa95d51b339bf5/server/assets/nft/live-challenge.png",
+        "type": "image/png"
+      }
+    ]
+  }
+}

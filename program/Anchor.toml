@@ -1,0 +1,26 @@
+[toolchain]
+
+[features]
+resolution = false
+skip-lint = false
+
+[programs.localnet]
+oddies_bet = "F4xhKysY8SrNwfqLZxyuJrZCWW8KPVbTjZWb4HHtD4ZA"
+
+[programs.devnet]
+oddies_bet = "F4xhKysY8SrNwfqLZxyuJrZCWW8KPVbTjZWb4HHtD4ZA"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "localnet"
+wallet = "keys/devnet-deploy-wallet.json"
+
+[scripts]
+# Sobe o validador local via scripts/test-local.sh, que faz o programa upgradeable
+# de verdade (upgrade authority = keys/devnet-deploy-wallet.json). O `anchor test`
+# padrão deployaria o programa como imutável no genesis, o que quebraria o teste
+# de initialize() travado na upgrade authority. Rodar com:
+#   anchor test --skip-build --skip-local-validator --skip-deploy
+test = "bash scripts/test-local.sh"

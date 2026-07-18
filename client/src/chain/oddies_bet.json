@@ -1,0 +1,1361 @@
+{
+  "address": "F4xhKysY8SrNwfqLZxyuJrZCWW8KPVbTjZWb4HHtD4ZA",
+  "metadata": {
+    "name": "oddies_bet",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Mercados de aposta parimutuel (multiplayer) e house-backed (singleplayer) com ticket-NFT"
+  },
+  "instructions": [
+    {
+      "name": "cancel_market",
+      "docs": [
+        "Cancela um mercado (partida adiada/cancelada). Todos recuperam o stake líquido."
+      ],
+      "discriminator": [
+        205,
+        121,
+        84,
+        210,
+        222,
+        71,
+        150,
+        11
+      ],
+      "accounts": [
+        {
+          "name": "config"
+        },
+        {
+          "name": "market",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "claim",
+      "docs": [
+        "Resgate: quem segura o ticket-NFT queima o token e recebe o prêmio do vault."
+      ],
+      "discriminator": [
+        62,
+        198,
+        214,
+        193,
+        213,
+        159,
+        108,
+        210
+      ],
+      "accounts": [
+        {
+          "name": "market",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "bet",
+          "writable": true
+        },
+        {
+          "name": "ticket_mint",
+          "writable": true
+        },
+        {
+          "name": "ticket_account",
+          "writable": true
+        },
+        {
+          "name": "claimer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_game_collection",
+      "docs": [
+        "Cria a Collection NFT de identidade de um jogo (ex.: \"Penalty Predictor\").",
+        "Uma por jogo — os tickets de aposta desse jogo entram nesta coleção via",
+        "`place_bet`, herdando a arte/identidade do jogo em carteiras e explorers.",
+        "Só a authority. O mint/update authority de toda coleção é a PDA",
+        "`collection_authority`, então o próprio programa assina a verificação dos",
+        "itens (nenhuma chave externa precisa ser a autoridade da coleção)."
+      ],
+      "discriminator": [
+        247,
+        124,
+        201,
+        47,
+        59,
+        93,
+        213,
+        64
+      ],
+      "accounts": [
+        {
+          "name": "config"
+        },
+        {
+          "name": "game_collection",
+          "writable": true
+        },
+        {
+          "name": "collection_authority",
+          "docs": [
+            "PDA que é mint/update authority de todas as coleções — o programa assina",
+            "com ela pra mintar a coleção e verificar os itens."
+          ]
+        },
+        {
+          "name": "collection_mint",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "collection_token_account",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "collection_metadata",
+          "writable": true
+        },
+        {
+          "name": "collection_master_edition",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "token_metadata_program"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program"
+        },
+        {
+          "name": "rent"
+        }
+      ],
+      "args": [
+        {
+          "name": "game_id",
+          "type": "u8"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "symbol",
+          "type": "string"
+        },
+        {
+          "name": "uri",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "create_market",
+      "docs": [
+        "Abre um mercado de apostas para um fixture (partida).",
+        "",
+        "- `Parimutuel` (multiplayer): os apostadores dividem o pote entre si; odds emergem do pool.",
+        "- `HouseBacked` (singleplayer): a casa paga `stake * odds_bps / 10000`; exige vault fundeado."
+      ],
+      "discriminator": [
+        103,
+        226,
+        97,
+        235,
+        200,
+        188,
+        251,
+        254
+      ],
+      "accounts": [
+        {
+          "name": "config"
+        },
+        {
+          "name": "market",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_id",
+          "type": "u64"
+        },
+        {
+          "name": "fixture_id",
+          "type": "u64"
+        },
+        {
+          "name": "kind",
+          "type": {
+            "defined": {
+              "name": "MarketKind"
+            }
+          }
+        },
+        {
+          "name": "outcome_count",
+          "type": "u8"
+        },
+        {
+          "name": "odds_bps",
+          "type": {
+            "array": [
+              "u64",
+              8
+            ]
+          }
+        },
+        {
+          "name": "close_ts",
+          "type": "i64"
+        },
+        {
+          "name": "resolve_after_ts",
+          "type": "i64"
+        },
+        {
+          "name": "game_id",
+          "type": "u8"
+        },
+        {
+          "name": "allowed_games",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "fund_house",
+      "docs": [
+        "Deposita liquidez da casa no vault (necessário antes de aceitar apostas HouseBacked).",
+        "Só a authority: dinheiro mandado por qualquer outra wallet ficaria preso no vault,",
+        "só sacável pela authority via withdraw_house."
+      ],
+      "discriminator": [
+        175,
+        231,
+        49,
+        44,
+        144,
+        102,
+        41,
+        69
+      ],
+      "accounts": [
+        {
+          "name": "config"
+        },
+        {
+          "name": "market"
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize",
+      "docs": [
+        "Cria a config global: quem administra, para onde vai a taxa e qual a taxa (ex.: 1000 = 10%).",
+        "Só a upgrade authority do programa pode chamar (evita que alguém inicialize primeiro",
+        "e vire authority permanente)."
+      ],
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "team_wallet"
+        },
+        {
+          "name": "program",
+          "docs": [
+            "Conta executável do próprio programa; usada só pra provar, via `program_data`,",
+            "que `authority` é a upgrade authority."
+          ]
+        },
+        {
+          "name": "program_data"
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "fee_bps",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "mint_game_badge",
+      "docs": [
+        "Emite um badge-NFT de identidade de um jogo (supply 1, membro da",
+        "Collection NFT do jogo) direto para a wallet do jogador. Cobre jogos sem",
+        "aposta on-chain (ex.: Live Challenge): o backend (authority) decide o",
+        "merecimento (ex.: completou um desafio) e paga o rent. O badge não dá",
+        "direito a prêmio — é identidade/colecionável, diferente do ticket de aposta."
+      ],
+      "discriminator": [
+        55,
+        20,
+        63,
+        219,
+        38,
+        154,
+        235,
+        234
+      ],
+      "accounts": [
+        {
+          "name": "config"
+        },
+        {
+          "name": "authority",
+          "docs": [
+            "Backend do jogo: autoriza a emissão e paga o rent do badge."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "recipient"
+        },
+        {
+          "name": "game_collection"
+        },
+        {
+          "name": "badge_mint",
+          "docs": [
+            "Badge-NFT do jogador: mint novo (keypair) a cada emissão — cada badge é",
+            "um NFT único (supply 1 por mint); a coleção do jogo não tem limite."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "badge_account",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "badge_metadata",
+          "writable": true
+        },
+        {
+          "name": "collection_mint",
+          "writable": true
+        },
+        {
+          "name": "collection_metadata",
+          "writable": true
+        },
+        {
+          "name": "collection_master_edition"
+        },
+        {
+          "name": "collection_authority"
+        },
+        {
+          "name": "token_metadata_program"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program"
+        },
+        {
+          "name": "rent"
+        }
+      ],
+      "args": [
+        {
+          "name": "game_id",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "place_bet",
+      "docs": [
+        "Aposta: cobra a taxa para a wallet do time, deposita o líquido no vault,",
+        "registra a Bet e minta o ticket-NFT (supply 1, decimals 0) para o apostador.",
+        "Quem segurar o ticket é quem resgata o prêmio — a aposta é transferível.",
+        "`game_id` declara qual jogo o apostador está jogando: precisa estar no",
+        "`allowed_games` do mercado, e o ticket entra na coleção desse jogo.",
+        "GAME_NONE = ticket sem coleção (permitido em qualquer mercado)."
+      ],
+      "discriminator": [
+        222,
+        62,
+        67,
+        220,
+        63,
+        166,
+        126,
+        33
+      ],
+      "accounts": [
+        {
+          "name": "config"
+        },
+        {
+          "name": "market",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "team_wallet",
+          "writable": true
+        },
+        {
+          "name": "bet",
+          "writable": true
+        },
+        {
+          "name": "ticket_mint",
+          "docs": [
+            "Ticket-NFT da aposta: mint novo (keypair do cliente), decimals 0, autoridade = market."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "ticket_account",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "bettor",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program"
+        },
+        {
+          "name": "rent"
+        },
+        {
+          "name": "game_collection",
+          "docs": [
+            "Registro da coleção do jogo declarado na aposta (define nome/arte do ticket)."
+          ],
+          "optional": true
+        },
+        {
+          "name": "ticket_metadata",
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "collection_mint",
+          "docs": [
+            "Mint da coleção do jogo (checado contra game_collection.collection_mint no handler)."
+          ],
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "collection_metadata",
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "collection_master_edition",
+          "optional": true
+        },
+        {
+          "name": "collection_authority",
+          "optional": true
+        },
+        {
+          "name": "token_metadata_program",
+          "optional": true
+        }
+      ],
+      "args": [
+        {
+          "name": "outcome",
+          "type": "u8"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "game_id",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "resolve_market",
+      "docs": [
+        "Resolve o mercado com o outcome vencedor (autoridade = oráculo v1).",
+        "Num parimutuel sem vencedores, o mercado vira Voided e todos recuperam o stake líquido."
+      ],
+      "discriminator": [
+        155,
+        23,
+        80,
+        173,
+        46,
+        74,
+        23,
+        239
+      ],
+      "accounts": [
+        {
+          "name": "config"
+        },
+        {
+          "name": "market",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "winning_outcome",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "update_config",
+      "docs": [
+        "Atualiza a config (authority, team_wallet e/ou fee). Permite migrar a authority",
+        "pra uma multisig (ex.: Squads) sem precisar redeployar o programa."
+      ],
+      "discriminator": [
+        29,
+        158,
+        252,
+        191,
+        10,
+        83,
+        219,
+        99
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "new_authority",
+          "type": {
+            "option": "pubkey"
+          }
+        },
+        {
+          "name": "new_team_wallet",
+          "type": {
+            "option": "pubkey"
+          }
+        },
+        {
+          "name": "new_fee_bps",
+          "type": {
+            "option": "u16"
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_game_collection",
+      "docs": [
+        "Atualiza a identidade de uma coleção de jogo (nome/símbolo/URI) — no PDA",
+        "e na metadata Metaplex da Collection NFT. Só a authority. Usado para",
+        "migrar o metadata de um host local para um público sem recriar a coleção",
+        "(os membros já verificados não são afetados)."
+      ],
+      "discriminator": [
+        95,
+        25,
+        17,
+        203,
+        96,
+        70,
+        226,
+        13
+      ],
+      "accounts": [
+        {
+          "name": "config"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "game_collection",
+          "writable": true
+        },
+        {
+          "name": "collection_mint",
+          "docs": [
+            "Mint da coleção — amarra a metadata abaixo à coleção deste jogo."
+          ]
+        },
+        {
+          "name": "collection_metadata",
+          "writable": true
+        },
+        {
+          "name": "collection_authority"
+        },
+        {
+          "name": "token_metadata_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "game_id",
+          "type": "u8"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "symbol",
+          "type": "string"
+        },
+        {
+          "name": "uri",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "withdraw_house",
+      "docs": [
+        "Retira do vault o que não está comprometido com apostadores",
+        "(lucro da casa em HouseBacked, ou sobras após um mercado liquidado)."
+      ],
+      "discriminator": [
+        226,
+        236,
+        222,
+        156,
+        198,
+        230,
+        70,
+        147
+      ],
+      "accounts": [
+        {
+          "name": "config"
+        },
+        {
+          "name": "market"
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "team_wallet",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Bet",
+      "discriminator": [
+        147,
+        23,
+        35,
+        59,
+        15,
+        75,
+        155,
+        32
+      ]
+    },
+    {
+      "name": "Config",
+      "discriminator": [
+        155,
+        12,
+        170,
+        224,
+        30,
+        250,
+        204,
+        130
+      ]
+    },
+    {
+      "name": "GameCollection",
+      "discriminator": [
+        226,
+        71,
+        131,
+        222,
+        45,
+        57,
+        95,
+        161
+      ]
+    },
+    {
+      "name": "Market",
+      "discriminator": [
+        219,
+        190,
+        213,
+        55,
+        0,
+        227,
+        198,
+        154
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "BadgeMinted",
+      "discriminator": [
+        53,
+        227,
+        68,
+        72,
+        115,
+        78,
+        25,
+        14
+      ]
+    },
+    {
+      "name": "BetPlaced",
+      "discriminator": [
+        88,
+        88,
+        145,
+        226,
+        126,
+        206,
+        32,
+        0
+      ]
+    },
+    {
+      "name": "Claimed",
+      "discriminator": [
+        217,
+        192,
+        123,
+        72,
+        108,
+        150,
+        248,
+        33
+      ]
+    },
+    {
+      "name": "MarketResolved",
+      "discriminator": [
+        89,
+        67,
+        230,
+        95,
+        143,
+        106,
+        199,
+        202
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidFee",
+      "msg": "Taxa inválida (máximo 10000 bps)"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidOutcomeCount",
+      "msg": "Número de outcomes inválido (2 a 8)"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidOdds",
+      "msg": "Odds precisam ser maiores que 1x (10000 bps)"
+    },
+    {
+      "code": 6003,
+      "name": "CloseInPast",
+      "msg": "Deadline de apostas no passado"
+    },
+    {
+      "code": 6004,
+      "name": "MarketNotOpen",
+      "msg": "Mercado não está aberto"
+    },
+    {
+      "code": 6005,
+      "name": "BettingClosed",
+      "msg": "Apostas encerradas para este mercado"
+    },
+    {
+      "code": 6006,
+      "name": "InvalidOutcome",
+      "msg": "Outcome inválido"
+    },
+    {
+      "code": 6007,
+      "name": "ZeroAmount",
+      "msg": "Valor precisa ser maior que zero"
+    },
+    {
+      "code": 6008,
+      "name": "InsufficientHouseLiquidity",
+      "msg": "Vault da casa sem liquidez suficiente"
+    },
+    {
+      "code": 6009,
+      "name": "MatchNotFinished",
+      "msg": "Partida ainda não terminou"
+    },
+    {
+      "code": 6010,
+      "name": "MarketNotSettled",
+      "msg": "Mercado ainda não foi liquidado"
+    },
+    {
+      "code": 6011,
+      "name": "AlreadyClaimed",
+      "msg": "Aposta já resgatada"
+    },
+    {
+      "code": 6012,
+      "name": "TicketNotHeld",
+      "msg": "Você não segura o ticket desta aposta"
+    },
+    {
+      "code": 6013,
+      "name": "LosingBet",
+      "msg": "Aposta perdedora"
+    },
+    {
+      "code": 6014,
+      "name": "MathOverflow",
+      "msg": "Overflow aritmético"
+    },
+    {
+      "code": 6015,
+      "name": "InvalidResolveWindow",
+      "msg": "resolve_after_ts precisa ser depois de close_ts"
+    },
+    {
+      "code": 6016,
+      "name": "Unauthorized",
+      "msg": "Não autorizado"
+    },
+    {
+      "code": 6017,
+      "name": "InvalidGameId",
+      "msg": "game_id inválido"
+    },
+    {
+      "code": 6018,
+      "name": "MetadataTooLong",
+      "msg": "Metadado (nome/símbolo/uri) longo demais"
+    },
+    {
+      "code": 6019,
+      "name": "MissingGameCollection",
+      "msg": "Mercado pertence a um jogo com coleção: contas da coleção são obrigatórias"
+    },
+    {
+      "code": 6020,
+      "name": "GameMismatch",
+      "msg": "Coleção não corresponde ao jogo do mercado"
+    },
+    {
+      "code": 6021,
+      "name": "GameNotAllowed",
+      "msg": "Jogo não habilitado neste mercado"
+    }
+  ],
+  "types": [
+    {
+      "name": "BadgeMinted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "game_id",
+            "type": "u8"
+          },
+          {
+            "name": "badge_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "recipient",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Bet",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "ticket_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "outcome",
+            "type": "u8"
+          },
+          {
+            "name": "game_id",
+            "docs": [
+              "Jogo declarado na aposta (coleção do ticket). GAME_NONE = sem coleção."
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "stake_net",
+            "docs": [
+              "Stake líquido (após taxa) que entrou no vault."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "fixed_payout",
+            "docs": [
+              "Payout travado na entrada (só HouseBacked)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "claimed",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BetPlaced",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "ticket_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "bettor",
+            "type": "pubkey"
+          },
+          {
+            "name": "outcome",
+            "type": "u8"
+          },
+          {
+            "name": "game_id",
+            "type": "u8"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "net",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Claimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "ticket_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "claimer",
+            "type": "pubkey"
+          },
+          {
+            "name": "payout",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Config",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "team_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "fee_bps",
+            "type": "u16"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GameCollection",
+      "docs": [
+        "Identidade on-chain de um jogo: a Collection NFT + os metadados que cada",
+        "ticket do jogo herda. Uma por game_id."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "game_id",
+            "type": "u8"
+          },
+          {
+            "name": "collection_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "collection_authority_bump",
+            "type": "u8"
+          },
+          {
+            "name": "ticket_name",
+            "type": "string"
+          },
+          {
+            "name": "ticket_symbol",
+            "type": "string"
+          },
+          {
+            "name": "ticket_uri",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Market",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market_id",
+            "type": "u64"
+          },
+          {
+            "name": "fixture_id",
+            "type": "u64"
+          },
+          {
+            "name": "game_id",
+            "docs": [
+              "Jogo principal do mercado (rótulo/fallback). GAME_NONE = sem coleção."
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "allowed_games",
+            "docs": [
+              "Bitmask dos jogos habilitados a apostar aqui (bit N = game_id N); cada",
+              "aposta declara seu jogo no place_bet e entra na coleção correspondente."
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "kind",
+            "type": {
+              "defined": {
+                "name": "MarketKind"
+              }
+            }
+          },
+          {
+            "name": "state",
+            "type": {
+              "defined": {
+                "name": "MarketState"
+              }
+            }
+          },
+          {
+            "name": "outcome_count",
+            "type": "u8"
+          },
+          {
+            "name": "odds_bps",
+            "docs": [
+              "Odds em bps (25000 = 2.5x, inclui o stake). Só usado em HouseBacked."
+            ],
+            "type": {
+              "array": [
+                "u64",
+                8
+              ]
+            }
+          },
+          {
+            "name": "pools",
+            "docs": [
+              "Total líquido apostado por outcome."
+            ],
+            "type": {
+              "array": [
+                "u64",
+                8
+              ]
+            }
+          },
+          {
+            "name": "liabilities",
+            "docs": [
+              "Obrigações da casa por outcome (só HouseBacked)."
+            ],
+            "type": {
+              "array": [
+                "u64",
+                8
+              ]
+            }
+          },
+          {
+            "name": "close_ts",
+            "type": "i64"
+          },
+          {
+            "name": "resolve_after_ts",
+            "docs": [
+              "Piso pra resolve_market: precisa ser depois do fim real da partida, não só do kickoff."
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "winning_outcome",
+            "type": "u8"
+          },
+          {
+            "name": "payout_pool",
+            "docs": [
+              "Pote total a distribuir (snapshot na resolução, só Parimutuel)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "outstanding",
+            "docs": [
+              "Quanto ainda pode ser reivindicado por apostadores; trava o withdraw_house."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "vault_bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MarketKind",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Parimutuel"
+          },
+          {
+            "name": "HouseBacked"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MarketResolved",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "state",
+            "type": {
+              "defined": {
+                "name": "MarketState"
+              }
+            }
+          },
+          {
+            "name": "winning_outcome",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MarketState",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Open"
+          },
+          {
+            "name": "Resolved"
+          },
+          {
+            "name": "Voided"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,18 +1,21 @@
-/* Design system: tema escuro com fundo marinho #0B1D3A, texto claro,
-   brand verde #00A24A e acento amarelo #FFCC00. Inter para UI e
-   JetBrains Mono para números, cantos .5rem, pills e grade sutil de fundo */
+/* Design system ChainPlay: tema Midnight — fundo near-black #0B0B0D,
+   texto branco, brand lima #C6F04E, superfícies/bordas #1F1F1F.
+   Instrument Sans para títulos, Inter para UI e JetBrains Mono para
+   números; cantos .5rem, pills e grade sutil de fundo. */
 
 :root {
-  --bg: #0a0e16;
-  --surface: #0a0e16;
-  --surface-2: #0e1521;
-  --border: #263c60;
-  --text: #f4f7fb;
-  --text-2: #c4d0e0;
-  --muted: #8798b0;
-  --brand: #00a24a;
-  --brand-hover: #12b356;
-  --mint: #3ee8b5;
+  --bg: #0b0b0d;
+  --surface: #101013;
+  --surface-2: #1f1f1f;
+  --border: #1f1f1f;
+  --text: #ffffff;
+  --text-2: #d6d6d6;
+  --muted: #9a9a9a;
+  --dim: #9aa4b2;
+  --brand: #c6f04e;
+  --brand-hover: #d4f66b;
+  --brand-ink: #0b0b0d;
+  --mint: #c6f04e;
   --amber: #ffcc00;
   --amber-ink: #ffcc00;
   --red: #ef4444;
@@ -27,33 +30,19 @@ body {
   margin: 0;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   background-color: var(--bg);
-  background-image:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 0),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.028) 1px, transparent 0);
-  background-size: 44px 44px;
   color: var(--text);
   min-height: 100vh;
+  /* corta o transbordo horizontal na borda da viewport (não na borda da
+     coluna), para o mascote poder aparecer nas margens laterais em telas
+     largas sem gerar scroll horizontal; clip preserva a navbar sticky.
+     hidden vem antes como fallback para navegadores sem suporte a
+     overflow-x: clip (ex.: Safari/WebViews mais antigos), que do
+     contrário ignoram a linha e voltam a "visible" (scroll horizontal). */
+  overflow-x: hidden;
+  overflow-x: clip;
 }
 
-/* atmosfera de estádio: refletores suaves que "respiram" atrás da grade */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(620px 320px at 12% -6%, rgba(0, 162, 74, 0.11), transparent 70%),
-    radial-gradient(720px 360px at 88% -2%, rgba(62, 232, 181, 0.07), transparent 70%),
-    radial-gradient(900px 480px at 50% 112%, rgba(0, 162, 74, 0.06), transparent 72%);
-  animation: stadium-breathe 9s ease-in-out infinite;
-}
-
-@keyframes stadium-breathe {
-  50% {
-    opacity: 0.6;
-  }
-}
+/* brilho de fundo removido a pedido — fundo fica limpo em near-black */
 
 .mono,
 .value,
@@ -348,7 +337,7 @@ button.lo:hover {
 button.primary {
   background: var(--brand);
   border-color: var(--brand);
-  color: #fff;
+  color: var(--brand-ink);
 }
 
 button.primary:hover {
@@ -434,12 +423,44 @@ footer a:hover {
 /* ---------- landing page ---------- */
 
 .landing {
-  max-width: 1040px;
+  max-width: 1360px;
   margin: 0 auto;
-  padding: 0 20px 40px;
+  /* padding inferior deixa folga para o ticker fixo do rodapé */
+  padding: 0 clamp(24px, 6vw, 104px) 96px;
   display: flex;
   flex-direction: column;
-  gap: 88px;
+  gap: clamp(72px, 8vw, 120px);
+  /* o corte do transbordo horizontal fica no body (borda da viewport),
+     para o mascote poder invadir as margens laterais em telas largas */
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+/* estado inicial enquanto o IntroSplash ainda está por cima: landing some
+   e sobe de leve, revelada por um crossfade quando o intro termina */
+.landing-intro-hidden {
+  opacity: 0;
+  transform: translateY(14px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing {
+    transition: none;
+  }
+}
+
+/* fundo da landing: estádio de futebol, fixo e sutil, com overlay escuro
+   controlando a opacidade pra não competir com o conteúdo; z-index negativo
+   mantém tudo clicável. (O hub de jogos usa background.jpg.jpeg à parte.) */
+.landing::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(rgba(11, 11, 13, 0.86), rgba(11, 11, 13, 0.94)),
+    url("/imgs/landing-bg.avif") center / cover no-repeat fixed;
+  pointer-events: none;
 }
 
 .topbar {
@@ -450,8 +471,9 @@ footer a:hover {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  padding: 14px 4px;
-  background: rgba(10, 14, 22, 0.85);
+  min-height: 84px;
+  padding: 10px 4px;
+  background: rgba(11, 11, 13, 0.85);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
 }
@@ -489,6 +511,13 @@ a.logo:hover {
   opacity: 0.8;
 }
 
+/* wordmark em imagem da marca ChainPlay */
+.logo-img {
+  display: block;
+  height: 64px;
+  width: auto;
+}
+
 .accent {
   color: var(--brand);
 }
@@ -520,7 +549,8 @@ a.logo:hover {
 .btn.primary {
   background: var(--brand);
   border-color: var(--brand);
-  color: #fff;
+  color: var(--brand-ink);
+  font-weight: 700;
 }
 
 .btn.primary:hover {
@@ -543,37 +573,88 @@ a.logo:hover {
 
 .hero {
   position: relative;
+  /* cancela a maior parte do gap flex do .landing para aproximar o
+     hero da navbar, deixando só um respiro curto no topo */
+  margin-top: calc(20px - clamp(72px, 8vw, 120px));
+  padding-top: 8px;
+  /* ocupa a primeira dobra: a próxima seção fica fora da tela */
   display: flex;
-  flex-direction: column;
   align-items: center;
-  text-align: center;
-  gap: 16px;
-  padding-top: 40px;
+  min-height: calc(100svh - 96px);
 }
 
-.hero-glow {
-  position: absolute;
-  top: -80px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 640px;
-  height: 420px;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(0, 162, 74, 0.18) 0%,
-    rgba(0, 162, 74, 0.05) 45%,
-    transparent 70%
-  );
-  pointer-events: none;
-  z-index: -1;
+/* contém o transbordo do mascote (.hero-character bleed) nesta seção em vez
+   de deixar só o body cortar: alguns navegadores mobile calculam
+   `position: fixed` de outros elementos da página (ex.: o overlay do menu)
+   contra a largura de layout real quando há qualquer transbordo não contido,
+   mesmo que visualmente mascarado. Restrito ao mobile (layout de coluna
+   única): no desktop isso cortava o mascote antes de ele poder ocupar a
+   margem lateral que o clip do body já existe para permitir (ver comentário
+   em body, acima), deixando um vão vazio entre o card e a borda da tela em
+   telas largas. */
+@media (max-width: 960px) {
+  .hero {
+    overflow-x: hidden;
+    overflow-x: clip;
+  }
+}
+
+.hero > .hero-grid {
+  width: 100%;
+}
+
+/* hero em duas colunas: copy à esquerda, jogo gigante à direita */
+.hero-grid {
+  display: grid;
+  grid-template-columns: 45fr 55fr;
+  gap: clamp(28px, 4vw, 64px);
+  align-items: center;
+}
+
+.hero-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 26px;
 }
 
 .hero h1 {
-  font-size: 3.4rem;
-  max-width: 760px;
-  line-height: 1.08;
+  font-size: clamp(2.4rem, 3.6vw, 4rem);
+  line-height: 1.06;
   margin: 0;
   animation: rise-in 0.6s ease both;
+}
+
+/* título principal do hero — Instrument Sans semibold, quebras controladas */
+.hero-title {
+  display: flex;
+  flex-direction: column;
+  font-family: "Instrument Sans", Inter, sans-serif;
+  font-weight: 600;
+  font-size: clamp(2.3rem, 4.4vw, 3.9rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin: 0;
+  animation: rise-in 0.6s ease both;
+}
+
+.hero-title-line {
+  display: block;
+}
+
+.hero-title-line.accent {
+  color: var(--brand);
+}
+
+.hero-sub {
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.55;
+  max-width: 380px;
+  margin: 0;
+  animation: rise-in 0.6s 0.1s ease both;
 }
 
 .hero .lead {
@@ -632,7 +713,7 @@ a.logo:hover {
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .hero-preview {
@@ -710,37 +791,42 @@ a.logo:hover {
   color: #fca5a5;
 }
 
-.stats-strip {
-  display: flex;
-  gap: 0;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  margin-top: 12px;
+/* faixa de métricas em largura total */
+.live-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 14px;
 }
 
-.stats-strip > div {
+.live-stats-grid > div {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 14px 30px;
+  gap: 6px;
+  padding: 26px 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-align: center;
+  transition: border-color 0.15s ease, box-shadow 0.2s ease, transform 0.15s ease;
 }
 
-.stats-strip > div + div {
-  border-left: 1px solid var(--border);
+.live-stats-grid > div:hover {
+  border-color: var(--brand);
+  box-shadow: 0 12px 34px rgba(0, 162, 74, 0.14);
+  transform: translateY(-2px);
 }
 
-.stats-strip strong {
-  font-size: 1.4rem;
+.live-stats-grid strong {
+  font-size: clamp(1.6rem, 2vw, 2.2rem);
   font-weight: 800;
   color: var(--brand);
+  line-height: 1;
 }
 
-.stats-strip span {
+.live-stats-grid span {
   font-family: Inter, sans-serif;
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   color: var(--muted);
 }
 
@@ -846,15 +932,11 @@ a.logo:hover {
 }
 
 .landing-footer {
-  text-align: center;
-  font-size: 0.78rem;
-  color: var(--muted);
-  padding-bottom: 8px;
-}
-
-.landing-footer a {
-  color: var(--brand);
-  text-decoration: none;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: clamp(32px, 4vw, 56px) 0;
+  text-align: left;
 }
 
 /* ---------- teaser jogável do hero ---------- */
@@ -1115,12 +1197,21 @@ a.logo:hover {
 .ticker {
   overflow: hidden;
   border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
   background: var(--surface-2);
   padding: 12px 0;
-  margin: -48px 0;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+/* barra fixa estilo ESPN no rodapé da janela */
+.ticker-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: rgba(10, 14, 22, 0.92);
+  backdrop-filter: blur(8px);
 }
 
 .ticker-track {
@@ -1324,54 +1415,101 @@ a.logo:hover {
 
 /* ---------- footer da landing ---------- */
 
-.footer-grid {
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 clamp(20px, 4vw, 40px);
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: 32px;
+  grid-template-columns: 1.6fr 1fr 1fr;
+  gap: clamp(32px, 6vw, 96px);
+  align-items: start;
   text-align: left;
-  border-top: 1px solid var(--border);
-  padding-top: 32px;
 }
 
+/* coluna esquerda: logo + slogan + botões sociais */
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.footer-logo .logo-img {
+  height: 40px;
+  width: auto;
+}
+
+.footer-slogan {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.footer-slogan-1 {
+  color: var(--text);
+}
+
+.footer-slogan-2 {
+  color: var(--brand);
+}
+
+.footer-socials {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+/* botão quadrado verde com ícone escuro (#131316) */
+.footer-social {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--brand);
+  color: #131316;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.footer-social:hover {
+  background: var(--brand-hover);
+  transform: translateY(-1px);
+}
+
+.footer-social svg {
+  display: block;
+}
+
+/* colunas de links */
 .footer-col {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: 14px;
 }
 
-.footer-col p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.82rem;
-  line-height: 1.6;
-  max-width: 320px;
-}
-
-.footer-col strong {
-  font-size: 0.72rem;
+.footer-heading {
+  font-size: 0.95rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-2);
+  color: var(--text);
+  margin-bottom: 2px;
 }
 
 .footer-col a {
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.6);
   text-decoration: none;
-  font-size: 0.82rem;
+  font-size: 0.9rem;
+  transition: color 0.15s ease;
 }
 
 .footer-col a:hover {
-  color: var(--text);
-}
-
-.footer-note {
-  margin-top: 28px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
-  font-size: 0.75rem;
-  color: var(--muted);
+  color: var(--brand);
+  text-decoration: none;
 }
 
 /* ---------- reveal on scroll ---------- */
@@ -1418,20 +1556,6 @@ a.logo:hover {
 
 .reveal.in :is(.grid-3, .pipeline, .roadmap, .not-grid) > :nth-child(6) {
   transition-delay: 0.4s;
-}
-
-.cta-final .btn.primary {
-  animation: cta-glow 2.6s ease-in-out infinite;
-}
-
-@keyframes cta-glow {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(0, 162, 74, 0.45);
-  }
-  50% {
-    box-shadow: 0 0 0 12px rgba(0, 162, 74, 0);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1496,34 +1620,18 @@ a.logo:hover {
     justify-content: center;
   }
 
-  .stats-strip {
-    flex-wrap: wrap;
-  }
-
-  .stats-strip > div {
-    padding: 12px 20px;
-  }
-
   .topbar-links {
     display: none;
   }
 
-  .footer-grid {
+  .footer-inner {
     grid-template-columns: 1fr;
-    gap: 24px;
-    text-align: center;
+    gap: 36px;
+    text-align: left;
   }
 
   .footer-col {
-    align-items: center;
-  }
-
-  .footer-col p {
-    max-width: none;
-  }
-
-  .ticker {
-    margin: -32px 0;
+    align-items: flex-start;
   }
 }
 
@@ -1594,6 +1702,23 @@ a.logo:hover {
   gap: 14px;
 }
 
+/* ação secundária de texto (Signup) ao lado do CTA Play Now */
+.nav-secondary {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.nav-secondary:hover {
+  color: var(--text);
+  transform: none;
+}
+
 /* ---------- polish: acessibilidade, estados e elevação ---------- */
 
 html {
@@ -1620,15 +1745,6 @@ button:active:not(:disabled),
 .btn:active,
 .pill-btn:active:not(:disabled) {
   transform: translateY(0) scale(0.98);
-}
-
-/* CTA primário com presença: sombra colorida sutil */
-.btn.primary {
-  box-shadow: 0 6px 20px rgba(0, 162, 74, 0.28);
-}
-
-.btn.primary:hover {
-  box-shadow: 0 8px 26px rgba(0, 162, 74, 0.4);
 }
 
 /* elevação no hover dos cards, mantendo o movimento discreto */
@@ -2041,6 +2157,76 @@ button.lo:hover:not(:disabled) {
   padding: 14px 20px;
 }
 
+/* barra mínima das telas internas: logo + voltar + slot de conta */
+.backbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 68px;
+  padding: 10px 20px;
+  background: rgba(11, 11, 13, 0.85);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.backbar .logo-img {
+  height: 48px;
+}
+
+.backbar-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.backbar-back:hover {
+  color: var(--text);
+  border-color: rgba(198, 240, 78, 0.5);
+  background: rgba(198, 240, 78, 0.06);
+}
+
+.backbar-back span {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.backbar-action {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+@media (max-width: 560px) {
+  .backbar {
+    padding: 8px 14px;
+    gap: 10px;
+  }
+  .backbar .logo-img {
+    height: 40px;
+  }
+  .backbar-back {
+    padding: 6px 10px;
+    font-size: 0.82rem;
+  }
+
+  .backbar-back-label {
+    display: none;
+  }
+}
+
 .topbar-links a.active {
   color: var(--text);
   position: relative;
@@ -2131,17 +2317,18 @@ button.lo:hover:not(:disabled) {
 
 .topbar-menu {
   display: none;
-  position: absolute;
-  top: 100%;
+  position: fixed;
+  top: 84px;
   left: 0;
   right: 0;
+  bottom: 0;
   flex-direction: column;
   align-items: stretch;
   gap: 4px;
-  padding: 12px 20px 16px;
-  background: rgba(10, 14, 22, 0.97);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--border);
+  padding: 16px 20px 24px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  overflow-y: auto;
   animation: menu-drop 0.2s ease both;
 }
 
@@ -2219,6 +2406,15 @@ button.lo:hover:not(:disabled) {
 
 .game-sub b {
   color: var(--brand);
+}
+
+/* barra de ações do jogo (migradas do navbar): Como jogar / Recomeçar */
+.game-toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 4px;
 }
 
 /* ---------- modal "Como jogar" ---------- */
@@ -2368,8 +2564,9 @@ button.lo:hover:not(:disabled) {
     display: flex;
   }
 
-  /* no mobile o CTA vive dentro do menu */
-  .topbar-actions > .btn {
+  /* no mobile o CTA e o Signup vivem dentro do menu */
+  .topbar-actions > .btn,
+  .topbar-actions > .nav-secondary {
     display: none;
   }
 
@@ -2389,5 +2586,3221 @@ button.lo:hover:not(:disabled) {
   .pending-chip,
   .streak-plus {
     animation: none;
+  }
+}
+
+/* ---------- landing wide: palco do hero ---------- */
+
+.hero-copy .lead {
+  max-width: 480px;
+}
+
+.hero-badges {
+  justify-content: flex-start;
+  margin-top: 4px;
+  animation: rise-in 0.6s 0.3s ease both;
+}
+
+/* palco do card: composição do placeholder + mascote, sem brilho */
+.hero-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: clamp(300px, 34vw, 440px);
+  animation: rise-in 0.7s 0.15s ease both;
+}
+
+/* wrapper que dá o contexto de posicionamento: dimensiona-se pelo card,
+   permitindo ancorar o mascote à borda direita e sobrepô-lo por cima.
+   Deslocado um pouco à esquerda para equilibrar a composição. */
+.hero-figure {
+  position: relative;
+  display: inline-block;
+  /* desloca o conjunto card+mascote mais para a esquerda para que a borda
+     direita do camaleão (braço/cauda em espiral) caiba dentro da seção e
+     não seja cortada pelo overflow-x: clip do .hero — sem alterar o tamanho
+     nem as proporções da imagem. Valor forte só no desktop (layout de duas
+     colunas); no mobile é reduzido no media query abaixo. */
+  transform: translateX(clamp(-150px, -10vw, -60px));
+}
+
+/* card do hero: moldura do vídeo de demonstração do minigame, com
+   brilho de marca ao redor para dar destaque ao vídeo em reprodução */
+.hero-media {
+  position: relative;
+  width: clamp(240px, 26vw, 500px);
+  aspect-ratio: 16 / 10;
+  border-radius: 12px;
+  background: #0b0b0d;
+  border: 1px solid rgba(198, 240, 78, 0.18);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.4),
+    0 0 30px rgba(198, 240, 78, 0.12),
+    0 0 60px rgba(198, 240, 78, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  animation: hero-media-glow 3.2s ease-in-out infinite;
+}
+
+@keyframes hero-media-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 24px 60px rgba(0, 0, 0, 0.4),
+      0 0 30px rgba(198, 240, 78, 0.12),
+      0 0 60px rgba(198, 240, 78, 0.06);
+  }
+  50% {
+    box-shadow:
+      0 24px 60px rgba(0, 0, 0, 0.4),
+      0 0 38px rgba(198, 240, 78, 0.2),
+      0 0 74px rgba(198, 240, 78, 0.1);
+  }
+}
+
+/* brilho ainda mais discreto no mobile, onde o card ocupa boa parte da
+   largura da tela e o glow forte chama atenção demais */
+@media (max-width: 660px) {
+  .hero-media {
+    border-color: rgba(198, 240, 78, 0.12);
+    box-shadow:
+      0 24px 60px rgba(0, 0, 0, 0.4),
+      0 0 18px rgba(198, 240, 78, 0.07),
+      0 0 34px rgba(198, 240, 78, 0.03);
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-media {
+    animation: none;
+  }
+}
+
+.hero-media-img,
+.hero-media-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* mascote camaleão apoiado na borda direita do card */
+/* mascote sobreposto: maior que o card e centrado verticalmente na sua
+   metade direita — a cabeça sobe acima do topo e a cauda desce abaixo,
+   ficando por cima (z-index).
+   A largura é percentual do .hero-figure (que tem o tamanho do card), então
+   o mascote acompanha o card na mesma proporção em qualquer tela — a posição
+   relativa nunca "desliza". */
+.hero-character {
+  position: absolute;
+  z-index: 2;
+  left: 38%;
+  top: 20%;
+  transform: translateY(-50%);
+  width: 135%;
+  height: auto;
+  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.45));
+}
+
+/* ---------- seção 2: showcase de minigames ---------- */
+
+.showcase {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  scroll-margin-top: 100px;
+}
+
+.showcase-title {
+  font-family: "Instrument Sans", Inter, sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.7rem, 3vw, 2.6rem);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--text);
+  margin: 0;
+}
+
+.showcase-sub {
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.55;
+  max-width: 440px;
+  margin: 0 0 clamp(20px, 3vw, 34px);
+}
+
+.showcase-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(16px, 2vw, 28px);
+}
+
+/* placeholder de imagem/GIF — bloco claro temporário, preparado para
+   receber os assets reais (matchPreviewImage, predictionGameGif,
+   challengeCardImage) via <img> ou background-image. */
+.showcase-card {
+  aspect-ratio: 3 / 2;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #e9e9e9 0%, #cfcfcf 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.showcase-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.showcase-card-hint {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7a7a7a;
+  user-select: none;
+}
+
+@media (max-width: 720px) {
+  .showcase-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* carrossel de depoimentos (CircularTestimonials) dentro do showcase */
+.showcase-testimonials {
+  display: flex;
+  justify-content: center;
+  margin-top: clamp(8px, 2vw, 20px);
+}
+
+.showcase-testimonials .testimonial-container {
+  max-width: 64rem;
+}
+
+/* setas do carrossel no mesmo estilo do hub de minigames (.carousel-arrow):
+   círculo com borda lima e leve recuo ao clicar */
+.showcase-testimonials .arrow-button {
+  border: 1px solid rgba(198, 240, 78, 0.55);
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+/* largura CSS explícita: como flex item, o svg das react-icons colapsa pra
+   width:0 no Chromium se só tiver o atributo width (mesmo motivo do
+   .carousel-arrow svg do hub) */
+.showcase-testimonials .arrow-button svg {
+  flex: none;
+  width: 22px;
+  height: 22px;
+}
+.showcase-testimonials .arrow-button:active {
+  transform: scale(0.92);
+}
+
+/* ---------- seção 3: vantagens do jogador ---------- */
+
+.advantages {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(28px, 3.5vw, 48px);
+  scroll-margin-top: 100px;
+}
+
+.advantages-title {
+  font-family: "Instrument Sans", Inter, sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.7rem, 3vw, 2.6rem);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--text);
+  margin: 0;
+  max-width: 16ch;
+}
+
+.advantages-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(20px, 2.5vw, 40px);
+}
+
+/* bloco limpo, sem card pesado: número lima, título branco, texto suave */
+.advantage {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.advantage-n {
+  font-family: "Instrument Sans", Inter, sans-serif;
+  font-size: clamp(1.9rem, 2.4vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--brand);
+  margin-bottom: 4px;
+}
+
+.advantage-heading {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text);
+  margin: 0;
+}
+
+.advantage-text {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0;
+  max-width: 30ch;
+}
+
+@media (max-width: 960px) {
+  .advantages-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 460px) {
+  .advantages-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- seção 4: comece em 3 passos (layout escalonado) ---------- */
+
+.get-started {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(28px, 3.5vw, 52px);
+  scroll-margin-top: 100px;
+}
+
+.get-started-title {
+  font-family: "Instrument Sans", Inter, sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.7rem, 3vw, 2.6rem);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--text);
+  margin: 0;
+}
+
+.get-started-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(28px, 4vw, 56px);
+}
+
+/* cada etapa: label acima + placeholder abaixo. Largura ~55% para permitir
+   o deslocamento lateral (esq / dir / esq) no desktop. */
+.get-started-step {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(100%, 540px);
+}
+
+/* passo 2 empurrado para a direita */
+.get-started-step:nth-child(2) {
+  align-self: flex-end;
+}
+
+.get-started-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+}
+
+/* placeholder de imagem/GIF — cinza claro, preparado para receber
+   stepWalletMedia / stepPredictionMedia / stepRewardsMedia via <img>. */
+.get-started-media {
+  aspect-ratio: 3 / 2;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #e9e9e9 0%, #cfcfcf 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.get-started-media-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 10px;
+}
+
+.get-started-hint {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7a7a7a;
+  user-select: none;
+}
+
+/* mobile: empilhar tudo com alinhamento uniforme (largura cheia, sem offset) */
+@media (max-width: 720px) {
+  .get-started-step,
+  .get-started-step:nth-child(2) {
+    width: 100%;
+    align-self: stretch;
+  }
+}
+
+.hero-stage .hero-teaser {
+  max-width: none;
+  margin-top: 0;
+  padding: clamp(20px, 2.2vw, 34px);
+  gap: 18px;
+  border-color: rgba(0, 162, 74, 0.35);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+}
+
+.hero-stage .preview-card {
+  padding: clamp(18px, 2vw, 28px);
+}
+
+.hero-stage .preview-value {
+  font-size: clamp(2.4rem, 3.4vw, 3.6rem);
+}
+
+.hero-stage .preview-teams {
+  font-size: 1.02rem;
+}
+
+.hero-stage .pill-btn {
+  padding: 12px 26px;
+  font-size: 0.95rem;
+}
+
+/* ---------- arena: jogo ao centro, dados dos lados ---------- */
+
+.arena-grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) 1fr minmax(240px, 300px);
+  gap: 20px;
+  align-items: start;
+  margin-top: 24px;
+}
+
+.arena-center .demo-board {
+  max-width: none;
+  margin: 0;
+  padding: clamp(20px, 2vw, 30px);
+  border-color: rgba(0, 162, 74, 0.35);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.arena-center .preview-value {
+  font-size: clamp(2.4rem, 3vw, 3.2rem);
+}
+
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panel-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  transition: border-color 0.15s ease;
+}
+
+.panel-block:hover {
+  border-color: rgba(0, 162, 74, 0.45);
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+.panel-chip {
+  font-size: 0.56rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.panel-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.panel-value {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.panel-sub {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.panel-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.panel-results li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.panel-match {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.panel-rank {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel-rank li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rank-pos {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(0, 162, 74, 0.15);
+  border: 1px solid var(--brand);
+  color: var(--brand);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.rank-name {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank-streak {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.panel-feed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel-feed li {
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.panel-feed .rank-name {
+  color: var(--mint);
+  font-size: 0.78rem;
+}
+
+/* ---------- responsividade do layout wide ---------- */
+
+@media (max-width: 1200px) {
+  .arena-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* centro em cima ocupando as duas colunas; painéis lado a lado embaixo */
+  .arena-center {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .live-stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 960px) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  /* em coluna única (centrado) o transbordo do desktop empurraria o card
+     para fora à esquerda — volta ao deslocamento suave original */
+  .hero-figure {
+    transform: translateX(clamp(-100px, -13vw, -40px));
+  }
+
+  /* card e mascote encolhem junto com a tela nesta faixa: sem isso, o
+     mascote (135% do card) ultrapassa a borda direita da viewport em
+     telas estreitas e sua cauda fica cortada pelo overflow-x: clip
+     do .hero */
+  .hero-media {
+    width: clamp(160px, 50vw, 270px);
+  }
+
+  .hero-copy {
+    align-items: center;
+    text-align: center;
+  }
+
+  .hero-title {
+    align-items: center;
+  }
+
+  .hero-sub {
+    margin-inline: auto;
+  }
+
+  .hero-actions {
+    justify-content: center;
+  }
+
+  .hero-badges {
+    justify-content: center;
+  }
+
+  .hero-glow {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+@media (max-width: 720px) {
+  .arena-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .arena-center {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .live-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .live-stats-grid > div {
+    padding: 18px 12px;
+  }
+
+  /* no mobile o ticker fixo cede espaço à navegação */
+  .ticker-bar {
+    display: none;
+  }
+
+  .landing {
+    padding-bottom: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spark,
+  .hero-stage,
+  .hero-character,
+  .hero-badges,
+  .live-stats-grid > div {
+    animation: none;
+    transition: none;
+  }
+}
+
+
+/* ===== CSS dos jogos restaurada (regressão do PR de landing #12) ===== */
+
+@keyframes stadium-breathe {
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.stats-strip {
+  display: flex;
+  gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.stats-strip > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 14px 30px;
+}
+
+.stats-strip > div + div {
+  border-left: 1px solid var(--border);
+}
+
+.stats-strip strong {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--brand);
+}
+
+.stats-strip span {
+  font-family: Inter, sans-serif;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 32px;
+  text-align: left;
+  border-top: 1px solid var(--border);
+  padding-top: 32px;
+}
+
+.footer-note {
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+@keyframes cta-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 162, 74, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(0, 162, 74, 0);
+  }
+}
+
+@media (max-width: 720px) {
+.stats-strip {
+    flex-wrap: wrap;
+  }
+.stats-strip > div {
+    padding: 12px 20px;
+  }
+.footer-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    text-align: center;
+  }
+}
+
+/* ===================== Hub de jogos (nova tela) ===================== */
+
+/* fundo do campo à noite, fixo e sutil — overlay escuro controla a opacidade
+   pra não competir com os cards; z-index negativo mantém tudo clicável */
+/* .game-page.hub-page (não só .hub-page) pra vencer o .game-page::before
+   genérico do redesign: mesma especificidade empataria e o grid (definido
+   depois no arquivo) ganharia, apagando a foto do campo aqui no hub. */
+.game-page.hub-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(rgba(11, 11, 13, 0.86), rgba(11, 11, 13, 0.94)),
+    url("/imgs/background.jpg.jpeg") center / cover no-repeat fixed;
+  pointer-events: none;
+}
+
+.hub-shell {
+  max-width: 1080px;
+  align-items: stretch;
+  gap: 28px;
+}
+
+/* --- topo: vídeo em destaque de ponta a ponta --- */
+.hub-hero {
+  width: 100%;
+}
+
+.pred-panel {
+  position: relative;
+  border-radius: 16px;
+  background: #08090b;
+  border: 1px solid rgba(80, 200, 255, 0.55);
+  box-shadow: 0 0 0 1px rgba(80, 200, 255, 0.12), 0 0 34px rgba(60, 180, 255, 0.22),
+    inset 0 0 40px rgba(40, 120, 180, 0.08);
+  overflow: hidden;
+  /* proporção real do vídeo (1920x1080): com min-height fixo o card ficava
+     quase quadrado em telas estreitas, cortando a logo no object-fit:cover */
+  aspect-ratio: 16 / 9;
+}
+
+/* acima de ~660px o card já é bem largo (até 1080px no hub), e manter
+   16:9 nessa largura toda deixava o painel excessivamente alto — trava
+   a altura aqui; object-fit: cover no vídeo cobre o resto sem distorcer. */
+@media (min-width: 661px) {
+  .pred-panel {
+    aspect-ratio: auto;
+    height: clamp(220px, 24vw, 360px);
+  }
+}
+
+.pred-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* scrim no topo: mantém o badge LIVE legível sobre qualquer frame do vídeo */
+.pred-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 72px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
+  z-index: 1;
+  pointer-events: none;
+}
+
+.pred-badge {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  color: var(--brand);
+  text-transform: uppercase;
+  z-index: 2;
+}
+
+.pred-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand);
+  box-shadow: 0 0 10px var(--brand);
+  animation: pred-blink 1.4s ease-in-out infinite;
+}
+
+@keyframes pred-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+/* --- cabeçalho da seção + setas --- */
+.carousel-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+}
+
+.carousel-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.carousel-sub {
+  margin: 4px 0 0;
+  color: var(--dim);
+  font-size: 0.9rem;
+}
+
+.carousel-nav {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.carousel-arrow {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(198, 240, 78, 0.55);
+  background: rgba(198, 240, 78, 0.06);
+  color: var(--brand);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.carousel-arrow svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  display: block;
+}
+
+.carousel-arrow:hover {
+  background: rgba(198, 240, 78, 0.16);
+}
+
+.carousel-arrow:active {
+  transform: scale(0.92);
+}
+
+/* --- carrossel horizontal de cards --- */
+.carousel-track {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 4px 2px 16px;
+  -ms-overflow-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(198, 240, 78, 0.4) transparent;
+}
+
+.carousel-track::-webkit-scrollbar {
+  height: 8px;
+}
+
+.carousel-track::-webkit-scrollbar-thumb {
+  background: rgba(198, 240, 78, 0.35);
+  border-radius: 9999px;
+}
+
+.game-card {
+  position: relative;
+  flex: 0 0 auto;
+  width: 240px;
+  aspect-ratio: 3 / 4;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: #0d0d10;
+  scroll-snap-align: start;
+  text-decoration: none;
+  color: var(--text);
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+a.game-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(198, 240, 78, 0.6);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 22px rgba(198, 240, 78, 0.18);
+}
+
+.game-card.is-soon {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.25);
+}
+
+.game-card-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.game-card-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 3.4rem;
+  background: radial-gradient(120% 120% at 50% 30%, #16161c 0%, #0a0a0d 100%);
+}
+
+.game-card-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.92) 0%,
+    rgba(0, 0, 0, 0.55) 38%,
+    rgba(0, 0, 0, 0) 70%
+  );
+}
+
+.game-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.stake-pill {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  color: var(--amber);
+  border: 1px solid var(--amber);
+  background: rgba(251, 191, 36, 0.12);
+  backdrop-filter: blur(2px);
+}
+
+/* tag "Em breve": sobe acima do esmaecido do card (opacity aplica no pai,
+   então a legibilidade vem do próprio contraste do pill) */
+.soon-tag {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  color: #e7ecf3;
+  border: 1px solid rgba(231, 236, 243, 0.5);
+  background: rgba(20, 22, 26, 0.72);
+  backdrop-filter: blur(2px);
+}
+
+.game-card-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.game-card-name {
+  font-size: 1.1rem;
+  line-height: 1.15;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+.game-card-desc {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.72);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.game-card-cta {
+  margin-top: 3px;
+  align-self: flex-start;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.game-card-cta.is-soon {
+  color: var(--dim);
+}
+
+@media (max-width: 780px) {
+  .game-card {
+    width: 200px;
+  }
+}
+
+.ticket-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 560px;
+  margin: 8px auto 20px;
+}
+
+.ticket-card {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  text-align: left;
+  gap: 10px 14px;
+  padding: 12px 16px;
+  /* .card reserva 230px para a carta do Hi-Lo; o ticket é só texto */
+  min-height: 0;
+}
+
+.ticket-main {
+  flex: 1 1 200px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ticket-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ticket-meta {
+  font-size: 0.78rem;
+  color: var(--dim, #9aa4b2);
+}
+
+.ticket-side {
+  flex: none;
+  display: flex;
+  align-items: center;
+}
+
+.ticket-payout {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  line-height: 1.25;
+}
+
+.ticket-payout-label {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+.ticket-payout-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ticket-claimable {
+  border-color: rgba(94, 234, 143, 0.55);
+  box-shadow: 0 0 18px rgba(94, 234, 143, 0.12);
+}
+
+.ticket-lost {
+  opacity: 0.6;
+}
+
+.ticket-claimed {
+  opacity: 0.75;
+}
+
+.staked-config {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto 24px;
+}
+
+.staked-label {
+  font-size: 0.95rem;
+  margin: 6px 0 0;
+  color: var(--dim, #9aa4b2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.staked-label-inline {
+  color: var(--dim, #9aa4b2);
+  font-size: 0.85rem;
+}
+
+.target-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+.target-card {
+  cursor: pointer;
+  padding: 16px 10px;
+  gap: 4px;
+  min-height: 0;
+  border-radius: 12px;
+  justify-content: center;
+  transition: transform 0.12s, border-color 0.12s, background 0.12s;
+}
+
+.target-card:hover {
+  transform: translateY(-2px);
+}
+
+/* meta escolhida: cartão preenchido na lima da marca com texto escuro (ref.) */
+.target-card.selected {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: var(--brand-ink);
+  box-shadow: 0 0 20px rgba(198, 240, 78, 0.25);
+}
+
+.target-n {
+  font-size: 1.7rem;
+  font-weight: 700;
+}
+
+.target-odds {
+  font-size: 0.78rem;
+  color: var(--dim, #9aa4b2);
+}
+
+.target-card.selected .target-odds {
+  color: var(--brand-ink);
+  opacity: 0.72;
+}
+
+.stake-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.center-row {
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.stake-chip {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.stake-chip.selected {
+  border-color: rgba(94, 234, 143, 0.7);
+  background: rgba(94, 234, 143, 0.08);
+}
+
+.potential {
+  font-size: 0.95rem;
+}
+
+.staked-cta {
+  min-width: 260px;
+}
+
+.devnet-note {
+  font-size: 0.75rem;
+}
+
+.lock-countdown {
+  font-size: 1.4rem;
+}
+
+/* ---- Penalty · aba Valendo SOL: alinhamento à marca lima e à referência ---- */
+
+/* aba ativa (Grátis / Valendo SOL): preenchida em lima, texto escuro */
+.arcade-tabs .stake-chip.selected {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+
+/* chips de stake do penalty: seleção em contorno lima */
+.staked-config .stake-chip.selected {
+  border-color: var(--brand);
+  background: rgba(198, 240, 78, 0.12);
+  color: var(--brand);
+}
+
+/* caixa de payout: moldura única que agrupa o resumo e o CTA (ref.) */
+.payout-box {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+/* dentro da caixa o resumo abre mão da própria moldura pra não duplicar bordas */
+.payout-box .penalty-summary {
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  overflow: visible;
+}
+
+.payout-box .penalty-summary > div,
+.payout-box .penalty-summary > .hilo-summary-prize {
+  background: transparent;
+  padding: 4px 10px;
+}
+
+/* CTA: barra larga sobre lima, texto escuro (herda de .primary), brilho sutil */
+.staked-config .staked-cta {
+  width: 100%;
+  min-width: 0;
+  max-width: 460px;
+  padding: 15px 24px;
+  font-size: 1.02rem;
+  box-shadow: 0 8px 24px rgba(198, 240, 78, 0.2);
+}
+
+/* dentro da caixa o CTA preenche toda a largura interna */
+.payout-box .staked-cta {
+  max-width: none;
+}
+
+/* nota devnet: centralizada logo abaixo do CTA (ref.) */
+.staked-config .devnet-note {
+  text-align: center;
+}
+
+/* Penalty Predictor: foto de estádio ao fundo, escurecida para o tema
+   Midnight — sobrepõe o grid padrão do .game-page::before. */
+.game-page.penalty-page::before {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(11, 11, 13, 0.42) 0%,
+      rgba(11, 11, 13, 0.66) 45%,
+      var(--bg) 100%
+    ),
+    url("/backgrounds/penalty-stadium.jpg") center 22% / cover no-repeat;
+  background-attachment: fixed;
+}
+
+/* clareia um pouco o degradê central para a foto respirar no topo */
+.game-page.penalty-page::after {
+  background: radial-gradient(
+    70% 60% at 50% 40%,
+    transparent 0%,
+    var(--bg) 85%
+  );
+}
+
+/* 1X2 Markets: foto de estádio ao fundo, escurecida para o tema Midnight
+   — mesmo tratamento do Penalty Predictor. */
+.game-page.markets-page::before {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(11, 11, 13, 0.42) 0%,
+      rgba(11, 11, 13, 0.66) 45%,
+      var(--bg) 100%
+    ),
+    url("/backgrounds/1x2-market.webp") center 22% / cover no-repeat;
+  background-attachment: fixed;
+}
+
+.game-page.markets-page::after {
+  background: radial-gradient(
+    70% 60% at 50% 40%,
+    transparent 0%,
+    var(--bg) 85%
+  );
+}
+
+/* Infinite Hi-Lo: foto de estádio ao fundo, escurecida para o tema Midnight
+   — mesmo tratamento do Penalty Predictor e do 1X2 Markets. */
+.game-page.infinite-page::before {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(11, 11, 13, 0.42) 0%,
+      rgba(11, 11, 13, 0.66) 45%,
+      var(--bg) 100%
+    ),
+    url("/backgrounds/hilo-infinite.webp") center 22% / cover no-repeat;
+  background-attachment: fixed;
+}
+
+.game-page.infinite-page::after {
+  background: radial-gradient(
+    70% 60% at 50% 40%,
+    transparent 0%,
+    var(--bg) 85%
+  );
+}
+
+/* leaderboard do arcade: sem caixa, só um filete sutil acima (ref.) */
+.arcade-page .lb-card {
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  margin-top: 28px;
+  padding: 22px 20px 0;
+  text-align: center;
+}
+
+.arcade-page .lb-title {
+  text-align: center;
+}
+
+.run-error {
+  max-width: 560px;
+  margin: 0 auto 12px;
+}
+
+.ghost-btn {
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  color: var(--dim, #9aa4b2);
+  border-radius: 10px;
+  padding: 8px 18px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.market-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto 24px;
+}
+
+.market-card {
+  align-items: stretch;
+  text-align: left;
+  gap: 12px;
+  padding: 18px 20px;
+}
+
+.market-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.market-head em {
+  color: var(--dim, #9aa4b2);
+  font-style: normal;
+  font-size: 0.85rem;
+}
+
+.outcome-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.outcome-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 0.12s, transform 0.12s;
+}
+
+.outcome-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: rgba(94, 234, 143, 0.5);
+}
+
+.outcome-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.outcome-btn.winner {
+  border-color: gold;
+}
+
+.outcome-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.outcome-pct {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.outcome-btn small {
+  color: var(--dim, #9aa4b2);
+  font-size: 0.7rem;
+}
+
+.market-foot {
+  font-size: 0.8rem;
+  color: var(--dim, #9aa4b2);
+}
+
+.market-ok {
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.hub-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 560px) {
+.outcome-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.login-panel {
+  max-width: 480px;
+  margin: 0 auto 20px;
+}
+
+.login-options {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.google-btn-slot {
+  min-height: 44px;
+  display: flex;
+  justify-content: center;
+}
+
+.login-hint {
+  font-size: 0.75rem;
+  max-width: 420px;
+  margin: 10px auto 0;
+}
+
+.login-error {
+  margin-top: 10px;
+}
+
+.custodial-info {
+  font-size: 0.75rem;
+  max-width: 520px;
+  word-break: break-all;
+}
+
+.ladder-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 8px 0 12px;
+}
+
+.ladder-rung {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.8rem;
+  color: var(--mint);
+}
+
+.cashout-cta {
+  display: block;
+  margin: 16px auto 6px;
+  font-size: 1.05rem;
+  animation: cashout-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes cashout-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+.cashout-cta { animation: none; }
+}
+
+.lb-card {
+  max-width: 560px;
+  margin: 24px auto;
+  padding: 16px 20px;
+}
+
+.lb-title {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.lb-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lb-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.lb-row.lb-you {
+  background: var(--surface-2);
+  outline: 1px solid var(--mint);
+}
+
+.lb-rank { color: var(--muted); min-width: 2.4em; }
+
+.lb-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.lb-name em { color: var(--mint); font-style: normal; }
+
+.lb-pts { color: var(--amber); }
+
+.stat-steppers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.stat-stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 4px;
+}
+
+.stepper button {
+  min-width: 40px;
+  padding: 6px 0;
+  font-size: 1rem;
+}
+
+.stepper b { font-size: 1.05rem; }
+
+.xray {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+  font-size: 0.8rem;
+}
+
+.xray-head, .xray-row {
+  display: grid;
+  grid-template-columns: 1fr 60px 60px 50px;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.xray-head em { color: var(--muted); font-style: normal; font-size: 0.7rem; }
+
+.xray-row i { color: var(--muted); font-style: normal; }
+
+.xray-row b { text-align: center; }
+
+.xray-pts { color: var(--mint); }
+
+.survivor-status { margin-bottom: 12px; }
+
+.pick-row {
+  flex-direction: row;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 16px;
+}
+
+.pick-survived { color: var(--mint); border-color: var(--mint); }
+
+.pick-eliminated { color: var(--red); border-color: var(--red); }
+
+.arcade-card {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 20px 24px;
+  text-align: center;
+}
+
+.arcade-event { margin: 0 0 6px; color: var(--muted); font-size: 0.9rem; }
+
+.arcade-question { margin: 0 0 14px; font-size: 1.3rem; }
+
+.arcade-timer {
+  /* o .card base centraliza (align-items) e encolheria a barra pra largura 0 */
+  align-self: stretch;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.arcade-timer-fill {
+  height: 100%;
+  background: var(--mint);
+  transition: width 0.1s linear;
+}
+
+.arcade-timer.urgent .arcade-timer-fill { background: var(--red); }
+
+.arcade-buttons { justify-content: center; }
+
+.arcade-result { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+
+.arcade-verdict { font-size: 1.2rem; font-weight: 700; margin: 0; }
+
+.quiz-clues {
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 16px;
+  margin: 0 0 16px;
+  text-align: left;
+}
+
+.quiz-clue {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.quiz-clue dt { color: var(--muted); font-size: 0.82rem; }
+
+.quiz-clue dd { margin: 0; font-weight: 600; }
+
+.quiz-options {
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.quiz-option {
+  padding: 12px 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.1s ease;
+}
+
+.quiz-option:hover { border-color: var(--mint); transform: translateY(-1px); }
+
+@media (max-width: 480px) {
+.quiz-clues,
+  .quiz-options { grid-template-columns: 1fr; }
+}
+
+.howto {
+  max-width: 640px;
+  margin: 0 auto 18px;
+  padding: 12px 18px;
+  text-align: left;
+  /* o .card base é flex com min-height pros cards de jogo — aqui não */
+  display: block;
+  min-height: 0;
+}
+
+.howto summary {
+  cursor: pointer;
+  font-weight: 600;
+  list-style-position: inside;
+}
+
+.howto-steps {
+  margin: 12px 0 8px;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.howto-profit {
+  margin: 8px 0 4px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+.howto-profit b { color: var(--amber); }
+
+.bucket-label {
+  margin-top: 14px;
+}
+
+/* nota didática do colecionável NFT na tela de aposta (Live/Team valendo SOL) */
+.nft-note {
+  font-size: 0.82rem;
+  margin: 4px 0 2px;
+  color: var(--mint);
+}
+
+/* ---------- Hi-Lo redesign: palco, escada, mascote e HUD ---------- */
+
+/* fundo premium do palco de jogo: glows da marca + grid sutil, tudo em
+   gradientes CSS (zero imagens, zero custo de paint em scroll) */
+.game-page {
+  position: relative;
+  isolation: isolate;
+  /* contém o brilho decorativo de .cards::before (que usa inset negativo)
+     para a largura de layout da página nunca exceder a viewport real. */
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+.game-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      42% 34% at 18% 8%,
+      rgba(198, 240, 78, 0.055),
+      transparent 70%
+    ),
+    radial-gradient(
+      50% 40% at 85% 90%,
+      rgba(198, 240, 78, 0.04),
+      transparent 70%
+    ),
+    linear-gradient(rgba(255, 255, 255, 0.016) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.016) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 44px 44px, 44px 44px;
+}
+
+/* o grid some suavemente em direção ao centro pra não competir com o jogo */
+.game-page::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    60% 55% at 50% 42%,
+    var(--bg) 20%,
+    transparent 100%
+  );
+}
+
+/* ---------- 1X2 Markets: passos, stake e botões de resultado ---------- */
+
+.mkt-steps {
+  margin-bottom: 4px;
+}
+
+/* trilho "como jogar": nós conectados por linha, sem numeração de seção */
+.mkt-flow {
+  list-style: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  margin: 4px 0 2px;
+  padding: 0;
+  width: 100%;
+}
+
+.mkt-flow li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 0 26px;
+}
+
+/* conector entre os nós, na altura dos glifos */
+.mkt-flow li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: calc(100% - 20px);
+  top: 13px;
+  width: 40px;
+  height: 2px;
+  background: var(--border);
+}
+
+.mkt-flow-glyph {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.mkt-flow-chip {
+  padding: 4px 10px;
+  border: 1px solid rgba(198, 240, 78, 0.45);
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--brand);
+  background: rgba(198, 240, 78, 0.07);
+}
+
+/* eco em miniatura das etiquetas 1/X/2 dos botões reais */
+.mkt-mini-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.mkt-mini-tag:nth-child(2) {
+  color: var(--brand-ink);
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+.mkt-flow-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .mkt-flow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 8px;
+    max-width: 420px;
+    margin-inline: auto;
+  }
+
+  .mkt-flow li {
+    padding: 0;
+  }
+
+  .mkt-flow li:not(:last-child)::after {
+    content: none;
+  }
+
+  .mkt-flow-label {
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+.mkt-stake {
+  align-items: center;
+  width: 100%;
+}
+
+/* cabeçalho enxuto: só o countdown de lock, sem repetir os times */
+.mkt-head-slim {
+  justify-content: flex-end;
+}
+
+.mkt-note {
+  margin: -6px 0 0;
+  font-size: 0.75rem;
+  max-width: 62ch;
+}
+
+.outcome-name .flag {
+  font-size: 1.05rem;
+}
+
+/* a ponte entre o stake e os cards: deixa explícito o que o clique faz */
+.mkt-tap-hint {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.outcome-btn {
+  position: relative;
+  overflow: hidden;
+  gap: 4px;
+  padding: 14px 8px 16px;
+}
+
+/* etiqueta 1 / X / 2 no canto do botão */
+.mkt-tag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.outcome-btn:hover:not(:disabled) .mkt-tag,
+.outcome-btn.picked .mkt-tag {
+  color: var(--brand-ink);
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+/* multiplicador estimado de agora: o motivo pra clicar */
+.mkt-est {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+/* mini-CTA dentro do botão: a ação fica literal */
+.mkt-bet-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 5px 14px;
+  border-radius: 9999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--brand-ink);
+  background: var(--brand);
+}
+
+.mkt-bet-cta.is-busy {
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+.mkt-bet-cta.is-picked {
+  background: rgba(198, 240, 78, 0.12);
+  color: var(--brand);
+  border: 1px solid rgba(198, 240, 78, 0.45);
+}
+
+/* participação do lado no pote, como barra no pé do botão */
+.mkt-share-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  background: rgba(198, 240, 78, 0.55);
+  border-radius: 0 2px 2px 0;
+  transition: width 0.4s ease;
+}
+
+.outcome-btn.picked {
+  border-color: var(--brand);
+  background: rgba(198, 240, 78, 0.07);
+  box-shadow: 0 0 18px rgba(198, 240, 78, 0.15);
+}
+
+.outcome-btn:disabled .mkt-bet-cta {
+  opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mkt-share-bar {
+    transition: none;
+  }
+}
+
+/* ---------- menu de conta no BackBar: endereço, saldo e sair ---------- */
+
+.acct-menu {
+  position: relative;
+  min-width: 0;
+}
+
+.acct-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.acct-trigger-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 3ch;
+}
+
+.acct-caret {
+  font-size: 0.7em;
+  margin-left: 2px;
+}
+
+.acct-pop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 90;
+  min-width: 260px;
+  max-width: min(320px, calc(100vw - 24px));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.55);
+  text-align: left;
+  animation: acct-pop-in 0.16s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes acct-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+
+.acct-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.acct-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.acct-addr {
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--text-2);
+  word-break: break-all;
+}
+
+.acct-copy {
+  align-self: flex-start;
+  padding: 5px 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-2);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+}
+
+.acct-copy:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.acct-balance {
+  font-size: 1.15rem;
+  color: var(--brand);
+}
+
+.acct-logout {
+  width: 100%;
+  padding: 9px 14px;
+  font-size: 0.85rem;
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 10px 10px;
+  margin: 2px -14px -14px;
+  width: calc(100% + 28px);
+  background: transparent;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  color: var(--muted);
+}
+
+.acct-logout:hover {
+  color: var(--red);
+  transform: none;
+  border-color: var(--border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acct-pop {
+    animation: none;
+  }
+}
+
+/* ---------- título display e escada aberta (setup enxuto) ---------- */
+
+.hilo-display {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: clamp(2.2rem, 5vw, 3rem);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.hilo-display .accent {
+  color: var(--brand);
+  text-shadow: 0 0 42px rgba(198, 240, 78, 0.35);
+}
+
+/* o setup enxuto ocupa a largura do shell, nunca o min-content da escada */
+.hilo-setup-lite {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* escada solta no fundo da página, sem card em volta */
+.hilo-ladder-open {
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+}
+
+.hilo-field-label.center {
+  text-align: center;
+}
+
+.hilo-ladder-open .ladder-rail {
+  width: 100%;
+}
+
+/* centraliza quando sobra espaço e ainda rola do início quando falta
+   (justify-content: center cortaria os degraus da esquerda no mobile) */
+.hilo-ladder-open .rail-rung:first-child {
+  margin-left: auto;
+}
+
+.hilo-ladder-open .rail-rung:last-child {
+  margin-right: auto;
+}
+
+/* card único da aposta: estreito e focado no CTA */
+.hilo-stage.hilo-bet-card {
+  max-width: 560px;
+}
+
+/* ---------- divisor + passos com descrição ---------- */
+
+.hilo-howto-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 1240px;
+  margin-top: 6px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.hilo-howto-divider::before,
+.hilo-howto-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+ol.hilo-steps.hilo-steps-rich {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px 20px;
+  width: 100%;
+  max-width: 1240px;
+}
+
+.hilo-steps-rich li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: 0;
+  font-size: inherit;
+  text-align: left;
+}
+
+.hilo-steps-rich li:not(:last-child)::after {
+  content: none;
+}
+
+.hilo-steps-rich li strong {
+  display: block;
+  font-size: 0.86rem;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.hilo-steps-rich li small {
+  display: block;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* hero do Infinite: badge, título grande e tagline de conversão */
+.hilo-hero {
+  gap: 12px;
+}
+
+.hilo-hero-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  color: var(--brand);
+  border: 1px solid rgba(198, 240, 78, 0.35);
+  background: rgba(198, 240, 78, 0.07);
+}
+
+.hilo-hero .game-question {
+  font-size: 2.5rem;
+  letter-spacing: -0.03em;
+}
+
+.hilo-hero .game-sub {
+  max-width: 560px;
+  line-height: 1.55;
+}
+
+/* tutorial visual: o loop do jogo em 5 chips encadeados */
+.hilo-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 auto 18px;
+  padding: 0;
+  list-style: none;
+  max-width: 860px;
+}
+
+.hilo-step-n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--brand-ink);
+  background: var(--brand);
+}
+
+/* palco: superfície única que agrupa setup/final, com o brilho da marca */
+.hilo-stage {
+  position: relative;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto 20px;
+  padding: 26px 28px;
+  background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.025),
+      rgba(255, 255, 255, 0) 40%
+    ),
+    var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35);
+  text-align: left;
+}
+
+/* glow contido no card (inset negativo entraria no scrollWidth no mobile) */
+.hilo-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    80% 90% at 50% 0%,
+    rgba(198, 240, 78, 0.05),
+    transparent 75%
+  );
+}
+
+/* escada em largura total no topo do palco, separada do corpo do setup */
+.hilo-ladder-field {
+  padding-bottom: 18px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.hilo-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.hilo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* mesmo vocabulário dos labels do scoreboard/cards */
+.hilo-field-label {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.hilo-footnote {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.hilo-panel .stake-row {
+  justify-content: flex-start;
+}
+
+.hilo-panel .staked-cta {
+  width: 100%;
+  min-width: 0;
+  padding: 16px 24px;
+  font-size: 1.05rem;
+  box-shadow: 0 8px 26px rgba(198, 240, 78, 0.22);
+  transition: background 0.15s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.hilo-panel .staked-cta:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 12px 34px rgba(198, 240, 78, 0.35);
+}
+
+.hilo-panel .staked-cta:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+  box-shadow: 0 6px 18px rgba(198, 240, 78, 0.25);
+}
+
+/* chips de stake: seleção com pop e preenchimento da marca */
+.hilo-panel .stake-chip {
+  transition: border-color 0.16s ease, background 0.16s ease,
+    color 0.16s ease, transform 0.16s ease;
+}
+
+.hilo-panel .stake-chip:hover:not(.selected) {
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+.hilo-panel .stake-chip.selected {
+  border-color: var(--brand);
+  background: rgba(198, 240, 78, 0.12);
+  color: var(--brand);
+  transform: scale(1.05);
+}
+
+/* estados desabilitados legíveis: CTA apagado sinaliza que falta algo */
+.hilo-panel .staked-cta:disabled,
+.hilo-final .primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.hilo-panel .betting-as,
+.hilo-panel .devnet-note {
+  margin: 0;
+}
+
+/* ---------- escada de prêmio: trilho horizontal com progresso ---------- */
+
+.ladder-rail {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  width: 100%;
+  max-width: 860px;
+  overflow-x: auto;
+  padding: 4px 2px 10px;
+  scrollbar-width: thin;
+}
+
+/* cada degrau sobe um pouco mais que o anterior: escada, não filtro */
+.rail-rung {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 58px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 10px 8px;
+  margin-bottom: calc((var(--i, 1) - 1) * 3px);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+/* trilho conectando os degraus */
+.rail-rung:not(:first-child)::before {
+  content: "";
+  position: absolute;
+  right: 100%;
+  bottom: 18px;
+  width: 11px;
+  height: 2px;
+  background: var(--border);
+}
+
+.rail-rung.done:not(:first-child)::before,
+.rail-rung.current:not(:first-child)::before {
+  background: rgba(198, 240, 78, 0.55);
+}
+
+.rung-mult {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+.rung-step {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* degrau já subido */
+.rail-rung.done {
+  border-color: rgba(198, 240, 78, 0.45);
+  background: rgba(198, 240, 78, 0.08);
+}
+
+.rail-rung.done .rung-mult,
+.rail-rung.done .rung-step {
+  color: var(--brand);
+}
+
+/* degrau atual: onde o prêmio está garantido. A classe entra quando o
+   jogador acerta, então o pop de conquista toca a cada subida. */
+.rail-rung.current {
+  border-color: var(--brand);
+  box-shadow: 0 0 20px rgba(198, 240, 78, 0.3);
+  transform: scale(1.06);
+  animation: rung-climb 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes rung-climb {
+  0% {
+    transform: scale(0.92) translateY(6px);
+    box-shadow: 0 0 0 rgba(198, 240, 78, 0);
+  }
+  55% {
+    transform: scale(1.14) translateY(-3px);
+    box-shadow: 0 0 34px rgba(198, 240, 78, 0.55);
+  }
+  100% {
+    transform: scale(1.06) translateY(0);
+  }
+}
+
+.rail-rung.current .rung-mult {
+  color: var(--brand);
+  font-size: 0.95rem;
+}
+
+/* próximo degrau: o alvo da rodada respira */
+.rail-rung.next {
+  animation: rung-next 1.8s ease-in-out infinite;
+}
+
+/* topo da escada: o pote de ouro */
+.rail-rung.cap .rung-mult {
+  color: var(--amber);
+}
+
+.rung-here {
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--brand);
+  white-space: nowrap;
+}
+
+@keyframes rung-next {
+  50% {
+    border-color: rgba(198, 240, 78, 0.6);
+    box-shadow: 0 0 12px rgba(198, 240, 78, 0.16);
+  }
+}
+
+/* ---------- resumo da aposta (config) ---------- */
+
+.hilo-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.5fr;
+  gap: 1px;
+  margin: 0;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.hilo-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  background: var(--surface-2);
+}
+
+.hilo-summary dt {
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.hilo-summary dd {
+  margin: 0;
+  font-size: 1.12rem;
+  font-weight: 700;
+}
+
+/* o prêmio é o protagonista do resumo: maior, verde e com fundo próprio */
+.hilo-summary > .hilo-summary-prize {
+  background: linear-gradient(
+      180deg,
+      rgba(198, 240, 78, 0.09),
+      rgba(198, 240, 78, 0.03)
+    ),
+    var(--surface-2);
+}
+
+.hilo-summary-prize dt {
+  color: rgba(198, 240, 78, 0.75);
+}
+
+.hilo-summary-prize dd {
+  color: var(--brand);
+  font-size: 1.7rem;
+  line-height: 1.1;
+  text-shadow: 0 0 24px rgba(198, 240, 78, 0.25);
+}
+
+/* ---------- HUD da run: sequência, multiplicador, garantido, prêmio ---------- */
+
+.hilo-play {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+}
+
+.hilo-hud {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.hilo-hud > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 24px;
+}
+
+.hilo-hud > div + div {
+  border-left: 1px solid var(--border);
+}
+
+.hilo-hud .label {
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.hilo-hud strong {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+/* o valor que o cash out garante agora — dourado como o botão de saque */
+.hilo-hud-secured strong {
+  color: var(--amber);
+}
+
+.hilo-cashout-hint {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+/* timeline do fluxo on-chain: feito → agora → próximo */
+.hilo-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.hilo-flow li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.hilo-flow li::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--muted);
+  flex: 0 0 auto;
+}
+
+.hilo-flow li:not(:last-child)::after {
+  content: "";
+  width: 12px;
+  height: 1px;
+  background: var(--border);
+  margin-left: 4px;
+}
+
+.hilo-flow .is-done {
+  color: var(--brand);
+}
+
+.hilo-flow .is-done::before {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+.hilo-flow .is-now {
+  color: var(--text);
+}
+
+.hilo-flow .is-now::before {
+  border-color: var(--brand);
+  animation: pending-pulse 1.6s ease-in-out infinite;
+}
+
+.hilo-flow .is-busy {
+  color: var(--text);
+}
+
+.hilo-flow .is-busy::before {
+  border-color: var(--brand);
+  border-right-color: transparent;
+  animation: hilo-spin 0.7s linear infinite;
+}
+
+/* ---------- countdown da janela de assinatura ---------- */
+
+.hilo-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  max-width: 320px;
+  margin: 8px auto 14px;
+}
+
+.hilo-countdown-label {
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.hilo-countdown-time {
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.hilo-countdown-bar {
+  width: 100%;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.hilo-countdown-fill {
+  height: 100%;
+  width: 100%;
+  border-radius: 9999px;
+  background: var(--brand);
+  transform-origin: left center;
+  transition: transform 1s linear;
+}
+
+/* ---------- telas finais: vitória, saque, derrota ---------- */
+
+.hilo-final {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 560px;
+}
+
+.hilo-final-body h2 {
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+}
+
+.hilo-final-body > p {
+  margin: 0 0 14px;
+  color: var(--text-2);
+}
+
+.hilo-final-body .endgame-actions {
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.hilo-final.is-win {
+  border-color: rgba(198, 240, 78, 0.4);
+  box-shadow: 0 0 44px rgba(198, 240, 78, 0.07);
+}
+
+.hilo-final.is-loss {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* ---------- spinners de processamento ---------- */
+
+.hilo-btn-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.hilo-spinner {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  opacity: 0.8;
+  animation: hilo-spin 0.7s linear infinite;
+}
+
+.hilo-settling {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+@keyframes hilo-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* ---------- responsivo ---------- */
+
+@media (max-width: 640px) {
+  .hilo-stage {
+    padding: 20px 16px;
+  }
+
+  .hilo-hud > div {
+    padding: 10px 14px;
+  }
+
+  .hilo-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail-rung.next,
+  .rail-rung.current,
+  .hilo-flow .is-now::before {
+    animation: none;
+  }
+
+  .hilo-countdown-fill {
+    transition: none;
+  }
+}
+
+/* ===================== Wallet (#/carteira) — repaginada =====================
+   Escopado em .wallet-page: card de carteira (saldo/endereço), tickets como
+   NFT-cards com realce por status e estados vazio/erro mais visuais. */
+
+/* --- card de carteira: identidade + saldo --- */
+.wallet-page .wallet-card {
+  width: 100%;
+  max-width: 560px;
+  margin: 6px auto 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: linear-gradient(
+    180deg,
+    rgba(198, 240, 78, 0.07),
+    rgba(16, 16, 19, 0.72)
+  );
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+.wallet-page .wallet-id {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.wallet-page .wallet-avatar {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 1.15rem;
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+.wallet-page .wallet-id-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  min-width: 0;
+}
+.wallet-page .wallet-name {
+  font-weight: 700;
+  font-size: 1.02rem;
+  color: var(--text);
+}
+.wallet-page .wallet-addr {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.15s;
+}
+.wallet-page .wallet-addr:hover {
+  color: var(--text-2);
+}
+.wallet-page .wallet-copy {
+  color: var(--brand);
+  font-size: 0.95rem;
+}
+.wallet-page .wallet-balance {
+  flex: none;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  padding: 9px 15px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.wallet-page .wallet-topup {
+  max-width: 560px;
+  margin: 0 auto 12px;
+  text-align: center;
+  font-size: 0.72rem;
+  line-height: 1.55;
+  word-break: break-all;
+}
+
+/* --- tickets como NFT-cards: barra de status na lateral --- */
+.wallet-page .ticket-card {
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  padding-left: 20px;
+}
+.wallet-page .ticket-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--muted);
+}
+.wallet-page .ticket-open::before {
+  background: var(--brand);
+}
+.wallet-page .ticket-claimable::before {
+  background: #5eea8f;
+}
+.wallet-page .ticket-lost::before {
+  background: var(--red);
+}
+.wallet-page .ticket-claimed::before {
+  background: var(--muted);
+}
+.wallet-page .ticket-head strong {
+  font-size: 0.94rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* status: a barra lateral já dá a cor — o chip fica discreto e só
+   ganha voz em "claimable", o único estado que pede ação. */
+.wallet-page .ticket-badge {
+  flex: none;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  background: rgba(0, 0, 0, 0.28);
+}
+.wallet-page .ticket-claimable .ticket-badge {
+  border-color: rgba(94, 234, 143, 0.5);
+  color: #5eea8f;
+  background: rgba(94, 234, 143, 0.1);
+}
+
+/* --- estados vazio / erro mais visuais --- */
+.wallet-page .wallet-state {
+  gap: 12px;
+}
+.wallet-page .wallet-state-icon {
+  font-size: 2.4rem;
+  line-height: 1;
+}
+
+/* ---------- intro splash: vídeo de abertura antes da landing ---------- */
+
+.intro-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  opacity: 1;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+/* desvanece com um leve zoom-out por cima da landing, que já está
+   surgindo por baixo — crossfade em vez de um corte seco entre as telas */
+.intro-splash-leaving {
+  opacity: 0;
+  transform: scale(1.03);
+  pointer-events: none;
+}
+
+.intro-splash-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* o vídeo é 16:9 (paisagem); em telas de celular (retrato) "cover" corta
+   boa parte do quadro — inclusive a logo que aparece no fim do clipe.
+   "contain" mostra o vídeo completo, com faixas pretas nas laterais em
+   vez de cortar conteúdo. */
+@media (max-width: 640px) {
+  .intro-splash-video {
+    object-fit: contain;
+  }
+}
+
+.intro-splash-skip {
+  position: absolute;
+  /* soma a margem clamp ao respiro de notch/home-indicator em telas com
+     safe-area (iPhones com câmera em ilha, gesto de home) */
+  right: calc(clamp(16px, 4vw, 32px) + env(safe-area-inset-right, 0px));
+  bottom: calc(clamp(16px, 4vw, 32px) + env(safe-area-inset-bottom, 0px));
+  min-height: 44px;
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(11, 11, 13, 0.55);
+  backdrop-filter: blur(6px);
+  color: var(--text);
+  font-family: Inter, sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.1s ease;
+}
+
+.intro-splash-skip:hover {
+  border-color: rgba(198, 240, 78, 0.55);
+  background: rgba(11, 11, 13, 0.75);
+}
+
+.intro-splash-skip:active {
+  transform: scale(0.95);
+}
+
+/* alvo de toque maior no mobile (mínimo recomendado de 44px) e fonte um
+   pouco maior para legibilidade a distância de braço */
+@media (max-width: 640px) {
+  .intro-splash-skip {
+    padding: 12px 24px;
+    font-size: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-splash,
+  .intro-splash-leaving {
+    transition: none;
   }
 }

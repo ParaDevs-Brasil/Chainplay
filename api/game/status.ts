@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { NETWORK } from "../../server/src/config.js";
-import { loadCachedCredentials } from "../../server/src/txlineAuth.js";
+import { loadCachedCredentials } from "../../server/src/txline/auth.js";
 
 export default function handler(_req: VercelRequest, res: VercelResponse) {
   const creds = loadCachedCredentials();

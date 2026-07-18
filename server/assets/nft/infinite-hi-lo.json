@@ -1,0 +1,22 @@
+{
+  "name": "Infinite Hi-Lo",
+  "symbol": "IHILO",
+  "description": "Identidade on-chain do mini game \"Infinite Hi-Lo\" no ChainPlay — cada aposta vira uma NFT membro desta coleção.",
+  "image": "https://raw.githubusercontent.com/ParaDevs-Brasil/sol-hackton/bd62d01a0dc5a1813d5e19fb77fa95d51b339bf5/server/assets/nft/infinite-hi-lo.png",
+  "external_url": "https://github.com/ParaDevs-Brasil/sol-hackton",
+  "attributes": [
+    {
+      "trait_type": "game",
+      "value": "Infinite Hi-Lo"
+    }
+  ],
+  "properties": {
+    "category": "image",
+    "files": [
+      {
+        "uri": "https://raw.githubusercontent.com/ParaDevs-Brasil/sol-hackton/bd62d01a0dc5a1813d5e19fb77fa95d51b339bf5/server/assets/nft/infinite-hi-lo.png",
+        "type": "image/png"
+      }
+    ]
+  }
+}

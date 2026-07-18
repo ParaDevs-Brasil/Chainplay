@@ -1,0 +1,10 @@
+**/node_modules
+client/dist
+server/.data
+**/*.log
+.git
+program/target
+program/keys
+keys_contract.md
+**/.env
+NFTs
