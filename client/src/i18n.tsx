@@ -1705,7 +1705,7 @@ const en: Dict = {
     menuAria: "Open account menu",
     working: "Signing in…",
     googleSetupHint:
-      "Google login: set GOOGLE_CLIENT_ID in server/.env and VITE_GOOGLE_CLIENT_ID in client/.env (Google Cloud OAuth Client ID, origin http://localhost:5173).",
+      "",
     noWalletHint:
       "No wallet extension? Sign in with Google — we create a devnet custodial account for you.",
     apiOfflineHint:
