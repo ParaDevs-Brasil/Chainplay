@@ -40,7 +40,7 @@ export default function IntroSplash({ onFinish }: { onFinish: () => void }) {
         className="intro-splash-skip"
         onClick={finish}
       >
-        Pular
+        close
       </button>
     </div>
   );
