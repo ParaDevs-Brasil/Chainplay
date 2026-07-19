@@ -16,7 +16,6 @@ const pt = {
   nav: {
     how: "Como funciona",
     minigames: "Minigames",
-    signup: "Signup",
     tech: "Tecnologia",
     vision: "Visão",
     faq: "FAQ",
@@ -1103,7 +1102,6 @@ const en: Dict = {
   nav: {
     how: "How it works",
     minigames: "Minigames",
-    signup: "Signup",
     tech: "Technology",
     vision: "Vision",
     faq: "FAQ",

@@ -425,7 +425,6 @@ export default function Landing() {
         links={[
           { label: t.nav.minigames, href: "#minigames" },
         ]}
-        secondaryCta={{ label: t.nav.signup, href: "#/jogos" }}
         cta={{ label: t.nav.play, href: "#/jogos" }}
       />
 
