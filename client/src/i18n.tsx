@@ -679,7 +679,7 @@ const pt = {
     demoTag: "demo",
     draw: "Empate",
     inPool: "no pote",
-    stakeLabel: "Stake",
+    stakeLabel: "Bet",
     betBtn: "Apostar",
     betting: "Assinando…",
     betOk: "✅ Aposta feita! O ticket-NFT está na sua carteira.",
@@ -778,7 +778,7 @@ const pt = {
     sideTip: "⚡ Keep the streak alive and climb higher every run!",
     mascotTip: "Hit the top 28× and unlock the max prize! 🏆",
     stepDescs: [
-      "Pick your stake and enter the run.",
+      "Pick Place a bet and enter the run.",
       "Will the next match stat be higher or lower?",
       "Right guess? You climb and multiply.",
       "Secure the prize now — or risk it all.",
@@ -798,9 +798,9 @@ const pt = {
     heroTitleA: "1X2",
     heroTitleB: "Markets",
     heroTag:
-      "Back home (1), draw (X) or away (2). Winners split the whole pot, proportional to their stake.",
+      "Back home (1), draw (X) or away (2). Winners split the whole pot, proportional to their bet.",
     steps: [
-      "Pick your stake",
+      "Pick Place a bet",
       "Choose 1 · X · 2",
       "Sign the bet",
       "Winners split the pot",
@@ -811,7 +811,7 @@ const pt = {
       "Your wallet signs — a ticket-NFT is your proof.",
       "After the match, the pot splits by stake among winners.",
     ],
-    flow: ["Stake", "Pick a side", "Sign", "Winners split the pot"],
+    flow: ["Place a bet", "Pick a side", "Sign", "Winners split the pot"],
     tapHint: (sol: string) => `Tap an outcome below to bet ${sol}`,
     betCta: (sol: string) => `Bet ${sol}`,
     est: (x: string) => `≈${x}× now`,
@@ -1720,9 +1720,9 @@ const en: Dict = {
     sub: "Pick your streak target, stake on devnet and the house pays if you hit it. The sequence is generated server-side — nobody sees the next number.",
     chooseTarget: "Streak target",
     oddsX: (x: string) => `pays ${x}×`,
-    stakeLabel: "Your stake",
+    stakeLabel: "Place a bet",
     potential: "Payout if you hit the target",
-    start: " Create staked run",
+    start: " Create",
     creating: "Creating on-chain market…",
     connectFirst: "Connect your wallet to play for SOL.",
     connect: "Connect wallet",
@@ -1766,7 +1766,7 @@ const en: Dict = {
     demoTag: "demo",
     draw: "Draw",
     inPool: "in the pot",
-    stakeLabel: "Stake",
+    stakeLabel: "Your Bet",
     betBtn: "Bet",
     betting: "Signing…",
     betOk: " Bet placed! The ticket-NFT is in your wallet.",
@@ -1825,7 +1825,7 @@ const en: Dict = {
     multiplier: "multiplier",
     cashedTitle: " Cashed out!",
     cashedSub: (sol: string) =>
-      `You secured ${sol}. The profit already left the house to your wallet; reclaim your stake with the ticket below.`,
+      `You secured ${sol}. The profit already left the house to your wallet; reclaim Place a bet with the ticket below.`,
     claimStake: (sol: string) => ` Reclaim stake (${sol})`,
     wonTitle: " TOP OF THE LADDER!",
     forfeitZero: " Give up (no hits yet, nothing to cash out)",
@@ -1838,7 +1838,7 @@ const en: Dict = {
     heroTag:
       "Stake once. Keep climbing forever. Cash out any time — or risk it all for the next multiplier.",
     steps: [
-      "Stake",
+      "Bet",
       "Guess higher or lower",
       "Hit → climb a rung",
       "Cash out any time",
@@ -1863,7 +1863,7 @@ const en: Dict = {
     sideTip: "Keep the streak alive and climb higher every run!",
     mascotTip: "Hit the top 28× and unlock the max prize! ",
     stepDescs: [
-      "Pick your stake and enter the run.",
+      "Pick Place a bet and enter the run.",
       "Will the next match stat be higher or lower?",
       "Right guess? You climb and multiply.",
       "Secure the prize now — or risk it all.",
@@ -1872,7 +1872,7 @@ const en: Dict = {
     securedNow: "secured now",
     hudPrize: "top prize",
     hudNext: "next rung",
-    summaryStake: "stake",
+    summaryStake: "Bet",
     summaryTop: "top pays",
     summaryPrize: "potential prize",
     signWindow: "time left to sign",
@@ -1883,9 +1883,9 @@ const en: Dict = {
     heroTitleA: "1X2",
     heroTitleB: "Markets",
     heroTag:
-      "Back home (1), draw (X) or away (2). Winners split the whole pot, proportional to their stake.",
+      "Back home (1), draw (X) or away (2). Winners split the whole pot, proportional to their bet.",
     steps: [
-      "Pick your stake",
+      "Pick Place a bet",
       "Choose 1 · X · 2",
       "Sign the bet",
       "Winners split the pot",
@@ -1896,7 +1896,7 @@ const en: Dict = {
       "Your wallet signs — a ticket-NFT is your proof.",
       "After the match, the pot splits by stake among winners.",
     ],
-    flow: ["Stake", "Pick a side", "Sign", "Winners split the pot"],
+    flow: ["Place a bet", "Pick a side", "Sign", "Winners split the pot"],
     tapHint: (sol: string) => `Tap an outcome below to bet ${sol}`,
     betCta: (sol: string) => `Bet ${sol}`,
     est: (x: string) => `≈${x}× now`,
@@ -2043,7 +2043,7 @@ const en: Dict = {
     profitLabel: "Where the prize comes from",
     staked: {
       steps: [
-        "Pick a streak target (3 to 20) and your stake — odds grow with the target.",
+        "Pick a streak target (3 to 20) and Place a bet — odds grow with the target.",
         "Sign the bet in your wallet: it becomes a ticket-NFT and the SOL goes into the on-chain market vault.",
         "Guess if the next match has MORE or LESS than the current one (goals, corners, cards, possession). Ties don't break your streak.",
         "Hit the target? The market settles on-chain and you claim the prize with your ticket.",
@@ -2059,11 +2059,11 @@ const en: Dict = {
         "Miss before cashing out = stake lost. Reach rung 12 = 28× straight from the market.",
       ],
       profit:
-        "Cashing out mid-ladder voids the market (the ticket refunds your stake) and the house pays the rung profit instantly. Odds pay below the statistical fair value — that's the house margin.",
+        "Cashing out mid-ladder voids the market (the ticket refunds Place a bet) and the house pays the rung profit instantly. Odds pay below the statistical fair value — that's the house margin.",
     },
     markets: {
       steps: [
-        "Pick an upcoming World Cup match and your stake.",
+        "Pick an upcoming World Cup match and Place a bet.",
         "Bet home, draw or away — the bet becomes a ticket-NFT and the SOL joins the community pool.",
         "The % show where the community is betting (odds emerge from the pool).",
         "After the match, winners split the pool pro-rata — claim in your Wallet.",
@@ -2132,10 +2132,10 @@ const en: Dict = {
 
   penaltySession: {
     freeTab: " Free (ranking)",
-    stakedTab: " Staked",
+    stakedTab: " Bet",
     chooseTarget: "Hit target across the 8 penalties",
     targetLabel: (n: number) => `${n} of 8`,
-    start: " Create staked session",
+    start: " Create",
     creating: "Creating on-chain market…",
     progress: (shots: number, total: number, hits: number) =>
       `penalty ${Math.min(shots + 1, total)} of ${total} · ${hits} hit(s)`,
@@ -2151,7 +2151,7 @@ const en: Dict = {
     stakedTab: " Staked",
     chooseTarget: "Hit target across the 8 challenges",
     targetLabel: (n: number) => `${n} of 8`,
-    start: " Create staked session",
+    start: " Create ",
     creating: "Creating on-chain market…",
     progress: (hits: number, total: number, target: number, rounds: number) =>
       `challenge ${Math.min(rounds + 1, total)} of ${total} · ${hits} hit(s) · ${Math.max(0, target - hits)} to go`,
@@ -2166,7 +2166,7 @@ const en: Dict = {
     stakedTab: " Staked",
     chooseTarget: "Hit target across the 5 rounds",
     targetLabel: (n: number) => `${n} of 5`,
-    start: " Create staked session",
+    start: " Create ",
     creating: "Creating on-chain market…",
     progress: (hits: number, total: number, target: number, rounds: number) =>
       `round ${Math.min(rounds + 1, total)} of ${total} · ${hits} hit(s) · ${Math.max(0, target - hits)} to go`,

@@ -36,7 +36,7 @@ const events = new Map<string, ArcadeEvent>();
 // sequência de acertos por wallet+jogo (em memória: zera no restart, ok pra demo)
 const streaks = new Map<string, number>();
 
-const PENALTY_WINDOW_MS = 8_000;
+const PENALTY_WINDOW_MS = 2_000;
 const LIVE_WINDOW_MS = 12_000;
 const PENALTY_GOAL_P = 0.76; // taxa histórica de conversão de pênaltis
 
