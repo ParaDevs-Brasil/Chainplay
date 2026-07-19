@@ -54,7 +54,7 @@ round draws a **different category** — goals, corners, possession or yellow ca
 and asks whether the next match's value will be **higher or lower** than the
 previous one.
 
-- **How to play**: pick only your stake (0.002 / 0.005 / 0.01 SOL) — there is no
+- **How to play**: place a bet (0.002 / 0.005 / 0.01 SOL) — there is no
   target to lock. Every correct call climbs one rung of a 12-level multiplier
   ladder, from 1.2× up to 28×.
 - **The decision on every hit**: keep risking for the next rung, or press
@@ -64,7 +64,7 @@ previous one.
 - **On-chain**: one house-backed market per session (`Market::HouseBacked`), 2
   outcomes (target hit / not hit). The match sequence is generated and validated
   **server-side** — the client never knows the next value before the player commits.
-  Cashing out mid-run voids the market (the ticket refunds the stake) and the house
+  Cashing out mid-run voids the market (the ticket refunds the bet amount) and the house
   pays the rung profit instantly. Odds pay below fair statistical value — that
   margin is the house edge.
 
@@ -73,10 +73,10 @@ previous one.
 *"Back the result — home, draw or away."*
 
 A classic parimutuel market on upcoming World Cup fixtures: the pot is split among
-whoever gets it right, proportional to stake — no house setting the odds, they
+whoever gets it right, proportional to bet amount — no house setting the odds, they
 emerge from the community itself.
 
-- **How to play**: pick an open fixture, a stake (0.01 / 0.05 / 0.1 SOL) and a side —
+- **How to play**: pick an open fixture, bet some amount (0.01 / 0.05 / 0.1 SOL) and a side —
   home (1), draw (X) or away (2). The bet mints an NFT ticket and the SOL joins that
   side's community pot.
 - **Live odds**: the % shown on each side derives from the current pot
@@ -96,9 +96,9 @@ emerge from the community itself.
 Lightning mode: whenever a penalty is taken, the player has a short window to
 predict the outcome before the kick.
 
-- **Free mode**: simulated penalties, **8 seconds** to pick GOAL or SAVE — saves are
+- **Free mode**: simulated penalties, **2 seconds** to pick GOAL or SAVE — saves are
   rare and worth more points; consecutive hits multiply the score. Default mode for
-  practice and ranking, no stake.
+  practice and ranking.
 - **Staked mode**: choose a hit target over a series of 8 kicks (6, 7 or 8 out of
   8) and a stake; sign the bet and answer all 8 within the timer — running out of
   time counts as a miss. Hitting the target pays **1.3×** (6/8), **2.2×** (7/8) or
